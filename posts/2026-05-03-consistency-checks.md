@@ -1,7 +1,7 @@
 # Measuring consistency in agent-generated code
 
 Status: Published
-Date: 2026-05-03
+Date: 3 May 2026
 Author: z3d
 
 One of the things I noticed when I worked with good developers was how consistent their code was. You could move from one project to another, or from one client to another, and become productive almost immediately.
@@ -10,9 +10,9 @@ Part of it was the significant amount of effort that went into developer experie
 
 That consistency is what I wanted to measure once agents started writing more of the code.
 
-The check I am describing is fairly small. Pick a cohort of files that solve the same kind of problem. Pin a few examples that show the intended shape. Extract a feature vector from every file in the cohort, normalize those features, then report which files have moved away from the examples and which features caused the movement.
+The check I am describing is fairly small. Pick a cohort of files that solve the same kind of problem. Pin a few examples that show the intended shape. Extract a feature vector from every file in the cohort, normalise those features, then report which files have moved away from the examples and which features caused the movement.
 
-The report is advisory. It should not say "fail the build because this handler scored 6.2." It should say "this handler is far from the exemplars because it has an unusual dependency count, retry shape, cache behavior, or entity-load pattern." Review can then decide whether the file is drift, legitimate local complexity, or the first instance of a pattern that should become an exemplar.
+The report is advisory. It should not say "fail the build because this handler scored 6.2." It should say "this handler is far from the exemplars because it has an unusual dependency count, retry shape, cache behaviour, or entity-load pattern." Review can then decide whether the file is drift, legitimate local complexity, or the first instance of a pattern that should become an exemplar.
 
 Convention tests come after that review. When an advisory finding turns into a rule the team can state clearly, it should leave the consistency report and become a deterministic test.
 
@@ -24,9 +24,9 @@ A single handler might only be a little odd: one extra dependency, inline DTO co
 
 Correctness, convention compliance, style, and consistency tend to get blurred together, but they want different tools.
 
-The concrete examples here come from a .NET codebase. If every command has to have a validator, that belongs in a deterministic convention test. If query handlers are not allowed to use EF Core, or command handlers are not allowed to use Dapper, encode that and let CI be boring. A formatter can settle whitespace. An analyzer can catch a narrow syntax rule. None of those tools tells you when a file has all the right ingredients but an unfamiliar shape.
+The concrete examples here come from a .NET codebase. If every command has to have a validator, that belongs in a deterministic convention test. If query handlers are not allowed to use EF Core, or command handlers are not allowed to use Dapper, encode that and let CI be boring. A formatter can settle whitespace. An analyser can catch a narrow syntax rule. None of those tools tells you when a file has all the right ingredients but an unfamiliar shape.
 
-In this work, consistency means idiom: proportions, dependency count, decomposition, cache behavior, private helpers, entity loads, and rare combinations of features. A file can satisfy every convention and still be the one where a reviewer should slow down and ask why it does not resemble its peers.
+In this work, consistency means idiom: proportions, dependency count, decomposition, cache behaviour, private helpers, entity loads, and rare combinations of features. A file can satisfy every convention and still be the one where a reviewer should slow down and ask why it does not resemble its peers.
 
 ## Where convention tests fit
 
@@ -40,7 +40,7 @@ That split matters because consistency scores are not policy. Scores point atten
 
 ## Prior art
 
-None of this starts from empty air. Style guides, formatters, and analyzers already make small choices disappear. Architecture-test tools such as [ArchUnit](https://www.archunit.org/userguide/html/000_Index.html) and [NetArchTest](https://github.com/BenMorris/NetArchTest) let teams encode structural rules in tests. Evolutionary architecture uses [fitness functions](https://www.thoughtworks.com/en-us/insights/books/building-evolutionaryarchitectures-second-edition) as automated feedback on architectural characteristics. [Approval and snapshot testing](https://approvaltestscpp.readthedocs.io/en/latest/generated_docs/ApprovalTestingConcept.html) compare current output with a known-good artifact.
+None of this starts from empty air. Style guides, formatters, and analysers already make small choices disappear. Architecture-test tools such as [ArchUnit](https://www.archunit.org/userguide/html/000_Index.html) and [NetArchTest](https://github.com/BenMorris/NetArchTest) let teams encode structural rules in tests. Evolutionary architecture uses [fitness functions](https://www.thoughtworks.com/en-us/insights/books/building-evolutionaryarchitectures-second-edition) as automated feedback on architectural characteristics. [Approval and snapshot testing](https://approvaltestscpp.readthedocs.io/en/latest/generated_docs/ApprovalTestingConcept.html) compare current output with a known-good artefact.
 
 This work sits near those ideas, but it is trying to fill a different gap. It is not a formatter, because the thing being measured is not whitespace or naming. It is not an architecture test, because it does not start with a rule. It is not a snapshot test, because the goal is not exact reproduction. It is not a replacement for review, because the output is a reason to look closer, not a verdict.
 
@@ -60,23 +60,25 @@ Each cohort needs three to five pinned exemplars. I would not compute against th
 
 The exemplars are the files you would point a new engineer, or a new agent session, at and say: write like this. They need written justification and review, because they become part of the measuring instrument. They should represent the intended shape of the cohort, not the longest file, the most defensive file, or whatever happened to land first.
 
-## Normalize before believing the number
+## Normalise before believing the number
 
-The structural layer extracts a small feature vector for every member of the cohort. For handlers, that meant things like IL byte size, constructor dependency count, logger presence, cache invalidation, try/catch usage, private method count, and entity load count.
+A distance score sounds more precise than it is. Underneath it is just a comparison across features. For a handler, those features might include IL byte size, constructor dependency count, logger presence, cache invalidation, try/catch usage, private method count, and entity load count.
 
-The first mistake was putting those raw values into one distance calculation. Some features were counts in the hundreds or thousands. Others were booleans, just 0 or 1. The largest-scale feature dominated the score, even when it was not the most interesting thing about the file.
+Those features do not naturally live on the same scale. IL byte size can be in the hundreds or thousands. A boolean such as "has a logger" is only 0 or 1. If those raw values go straight into one distance calculation, the feature with the biggest numbers gets the loudest voice.
 
-In the command-handler cohort, unnormalized `IlByteSize` accounted for 98.5% of the distance contribution and was the top contributor for every handler. That was not a consistency report. It was a size report with extra steps.
+That is exactly what happened. In the command-handler cohort, unnormalised `IlByteSize` accounted for 98.5% of the distance contribution and was the top contributor for every handler. The report looked mathematical, but it was mostly answering one question: which handler has more IL?
 
-After normalizing each feature against the cohort, the report changed. Entity loads, IL byte size, try/catch usage, and dependency count all started showing up as contributors. The outliers were no longer just files with more code. They were files with unusual combinations of features.
+Normalisation fixes that by making each feature relative to the cohort before distance is calculated. A count of seven constructor dependencies matters because most handlers have fewer. A try/catch matters because almost no handlers use one. A large IL body still matters, but it no longer drowns out everything else.
 
-That is the rule I would keep: normalize before calculating distance, and always show which features drove the score. Otherwise the number can look objective while mostly measuring the wrong thing.
+After normalising the features, the report changed. Entity loads, IL byte size, try/catch usage, and dependency count all started showing up as contributors. The outliers were no longer just files with more code. They were files with unusual combinations of features.
+
+That is the rule I would keep: normalise before calculating distance, and always show which features drove the score. Otherwise the number can look objective while mostly measuring the wrong thing.
 
 ## What the scoring layers showed
 
 The implementation tried three scoring layers: structural distance, AST/IL shingle similarity, and embedding distance. I expected three mostly independent signals. What I got was more useful than that, but less elegant.
 
-Structural distance carried the work once normalization was fixed. It found files with unusual combinations of features: more entity loads than the cohort expected, different dependency counts, retry shapes, private helpers, try/catch blocks. Shingle similarity was more like a second opinion. It often moved with structural distance, but it still helped when two files had similar feature vectors and different skeletons.
+Structural distance carried the work once normalisation was fixed. It found files with unusual combinations of features: more entity loads than the cohort expected, different dependency counts, retry shapes, private helpers, try/catch blocks. Shingle similarity was more like a second opinion. It often moved with structural distance, but it still helped when two files had similar feature vectors and different skeletons.
 
 Embedding distance was the least reliable scoring layer. It often noticed vocabulary before it noticed design. A handler with domain-specific names can look far from the exemplars even when its shape is normal. That makes embeddings noisy as a score.
 
@@ -104,7 +106,7 @@ The three cohorts were useful because they failed in different ways. Command han
 
 ### Command handlers
 
-The command-handler cohort had 34 members and seven features. Before normalization, the largest handlers dominated the report. After normalization, the strongest outliers were two handlers that wrapped work in SERIALIZABLE transactions with retry and rollback.
+The command-handler cohort had 34 members and seven features. Before normalisation, the largest handlers dominated the report. After normalisation, the strongest outliers were two handlers that wrapped work in SERIALIZABLE transactions with retry and rollback.
 
 Those handlers were not wrong. They were carrying legitimate business complexity. The report still did its job because it did not say "fail this." It said "this is structurally unusual, please look at it." That is the right level of confidence for this kind of tool.
 
@@ -147,7 +149,7 @@ The workflow I trust now is:
 1. Pick one cohort large enough to measure and important enough to drift.
 2. Pin three to five exemplars with written justification.
 3. Extract a small feature vector that represents shape, not taste.
-4. Normalize features before computing distance.
+4. Normalise features before computing distance.
 5. Read the report as advisory review guidance.
 6. Promote repeatable deterministic findings into convention tests.
 7. Update exemplars when a new pattern becomes intentional.
