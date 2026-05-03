@@ -151,7 +151,15 @@
       <h2>Normalise before believing the number</h2>
 
       <p>
-        A distance score sounds more precise than it is. Underneath it is just a comparison across features. For a handler, those features might include IL byte size, constructor dependency count, logger presence, cache invalidation, try/catch usage, private method count, and entity load count.
+        Once the cohort and exemplars are chosen, the next step is to compare each candidate file with the shape the exemplars represent. That comparison starts by turning every file into a small set of measurements. For a handler, those measurements might include IL byte size, constructor dependency count, logger presence, cache invalidation, try/catch usage, private method count, and entity load count.
+      </p>
+
+      <p>
+        The distance score is just a way to combine those measurements into a review signal. It is not trying to decide whether the file is good or bad. It is trying to answer a narrower question: which files look furthest from the pinned exemplar shape?
+      </p>
+
+      <p>
+        That only works if each measurement gets a fair say.
       </p>
 
       <p>

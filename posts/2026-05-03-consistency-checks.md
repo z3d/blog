@@ -62,7 +62,11 @@ The exemplars are the files you would point a new engineer, or a new agent sessi
 
 ## Normalise before believing the number
 
-A distance score sounds more precise than it is. Underneath it is just a comparison across features. For a handler, those features might include IL byte size, constructor dependency count, logger presence, cache invalidation, try/catch usage, private method count, and entity load count.
+Once the cohort and exemplars are chosen, the next step is to compare each candidate file with the shape the exemplars represent. That comparison starts by turning every file into a small set of measurements. For a handler, those measurements might include IL byte size, constructor dependency count, logger presence, cache invalidation, try/catch usage, private method count, and entity load count.
+
+The distance score is just a way to combine those measurements into a review signal. It is not trying to decide whether the file is good or bad. It is trying to answer a narrower question: which files look furthest from the pinned exemplar shape?
+
+That only works if each measurement gets a fair say.
 
 Those features do not naturally live on the same scale. IL byte size can be in the hundreds or thousands. A boolean such as "has a logger" is only 0 or 1. If those raw values go straight into one distance calculation, the feature with the biggest numbers gets the loudest voice.
 
