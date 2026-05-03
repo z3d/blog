@@ -120,7 +120,9 @@ The composite distance score was useful as a sort order. It told review which fi
 
 The per-feature report keeps those reasons visible. It uses the same fingerprint as the distance score, but reports each feature separately. The output is organised by feature name. For each feature, it shows the exemplar expectation and the files whose values differ enough to matter.
 
-Boolean and numeric features need different treatment. For boolean features, the report compares the file with the nearest exemplar shape, not with a global majority. That avoids false positives in cohorts with valid sub-shapes. A paginated query should be compared with the paginated-list exemplar, not with a by-id query. After that match, a difference such as `HasCacheInvalidator`, `HasTryCatch`, or `IsCacheable` is easy to read.
+By feature, I just mean one measurement in the fingerprint. Some features are yes/no questions. I call those boolean features: does the handler have cache invalidation, does it use try/catch, is the query cacheable? Other features are counts or sizes. I call those numeric features: IL byte size, constructor dependency count, entity load count, JOIN count.
+
+Those two kinds of feature need different treatment. For boolean features, the report compares the file with the nearest exemplar shape, not with a global majority. That avoids false positives in cohorts with valid sub-shapes. A paginated query should be compared with the paginated-list exemplar, not with a by-id query. After that match, a difference such as `HasCacheInvalidator`, `HasTryCatch`, or `IsCacheable` is easy to read.
 
 For numeric features, the report compares against the exemplar mean and spread. If the exemplars usually have two or three constructor dependencies and a handler has seven, the report does not need to hide that inside a 6.2 score. If every query exemplar has zero JOINs, the first handler with a JOIN should be visible even if the rest of the file looks ordinary.
 

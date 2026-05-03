@@ -263,7 +263,11 @@
       </p>
 
       <p>
-        Boolean and numeric features need different treatment. For boolean features, the report compares the file with the nearest exemplar shape, not with a global majority. That avoids false positives in cohorts with valid sub-shapes. A paginated query should be compared with the paginated-list exemplar, not with a by-id query. After that match, a difference such as <code>HasCacheInvalidator</code>, <code>HasTryCatch</code>, or <code>IsCacheable</code> is easy to read.
+        By feature, I just mean one measurement in the fingerprint. Some features are yes/no questions. I call those boolean features: does the handler have cache invalidation, does it use try/catch, is the query cacheable? Other features are counts or sizes. I call those numeric features: IL byte size, constructor dependency count, entity load count, JOIN count.
+      </p>
+
+      <p>
+        Those two kinds of feature need different treatment. For boolean features, the report compares the file with the nearest exemplar shape, not with a global majority. That avoids false positives in cohorts with valid sub-shapes. A paginated query should be compared with the paginated-list exemplar, not with a by-id query. After that match, a difference such as <code>HasCacheInvalidator</code>, <code>HasTryCatch</code>, or <code>IsCacheable</code> is easy to read.
       </p>
 
       <p>
