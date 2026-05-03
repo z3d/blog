@@ -12,7 +12,9 @@ That consistency is what I wanted to measure once agents started writing more of
 
 I should be clear about how this came together. The consistency problem was mine: I wanted a way to notice when generated code stopped resembling the code around it. I am years away from my CS degree and the university statistics courses where I last had to think seriously about this kind of thing. The vague measurement idea was some kind of eigenvector characterisation of code shape. I let Claude Code and Codex guide the translation from that hunch into something I could actually try against a codebase.
 
-The check I am describing is fairly small. Pick a cohort of files that solve the same kind of problem. Pin a few examples that show the intended shape. Extract a feature vector from every file in the cohort, normalise those features, then report which files have moved away from the examples and which features caused the movement.
+The testable version ended up smaller than the hunch. Instead of trying to find one abstract mathematical representation of a file, it treats each file as a row of measurements. That row is the feature vector: IL byte size, constructor dependency count, whether the handler has cache invalidation, whether it uses try/catch, entity load count, and so on.
+
+The check is then fairly small. Pick a cohort of files that solve the same kind of problem. Pin a few examples that show the intended shape. Turn every file in the cohort into the same row of measurements, normalise those measurements, then report which files look furthest from the examples and which measurements explain the difference.
 
 The report is advisory. It should not say "fail the build because this handler scored 6.2." It should say "this handler is far from the exemplars because it has an unusual dependency count, retry shape, cache behaviour, or entity-load pattern." Review can then decide whether the file is drift, legitimate local complexity, or the first instance of a pattern that should become an exemplar.
 

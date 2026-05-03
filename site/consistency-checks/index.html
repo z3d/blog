@@ -63,7 +63,11 @@
       </p>
 
       <p>
-        The check I am describing is fairly small. Pick a cohort of files that solve the same kind of problem. Pin a few examples that show the intended shape. Extract a feature vector from every file in the cohort, normalise those features, then report which files have moved away from the examples and which features caused the movement.
+        The testable version ended up smaller than the hunch. Instead of trying to find one abstract mathematical representation of a file, it treats each file as a row of measurements. That row is the feature vector: IL byte size, constructor dependency count, whether the handler has cache invalidation, whether it uses try/catch, entity load count, and so on.
+      </p>
+
+      <p>
+        The check is then fairly small. Pick a cohort of files that solve the same kind of problem. Pin a few examples that show the intended shape. Turn every file in the cohort into the same row of measurements, normalise those measurements, then report which files look furthest from the examples and which measurements explain the difference.
       </p>
 
       <p>
