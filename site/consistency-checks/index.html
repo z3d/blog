@@ -67,6 +67,10 @@
       </p>
 
       <p>
+        Convention tests come after that review. When an advisory finding turns into a rule the team can state clearly, it should leave the consistency report and become a deterministic test.
+      </p>
+
+      <p>
         Agent-generated code makes this useful because the problem can accumulate quietly. The code compiles, the unit tests pass, and the handler answers the right request. After enough of those changes, though, the codebase can start to feel less like one system and more like a folder of plausible one-offs.
       </p>
 
@@ -86,6 +90,24 @@
 
       <p>
         In this work, consistency means idiom: proportions, dependency count, decomposition, cache behavior, private helpers, entity loads, and rare combinations of features. A file can satisfy every convention and still be the one where a reviewer should slow down and ask why it does not resemble its peers.
+      </p>
+
+      <h2>Where convention tests fit</h2>
+
+      <p>
+        Convention tests are for decisions the team has already made. If every command handler must have a validator, that should be a convention test. If query handlers must not use EF Core, or command handlers must not use Dapper, encode the rule directly and let CI catch it every time.
+      </p>
+
+      <p>
+        Consistency checks are for questions the team has not fully named yet. A report might show that a handler is far from the exemplars because it constructs DTOs inline instead of using the mapper. The first time that appears, it is a review question. It might be harmless local complexity, or it might be a real convention hiding in plain sight.
+      </p>
+
+      <p>
+        Once review decides "we should never do that, except for this one result-summary case", the finding should graduate into a convention test. From then on, the consistency report no longer has to rediscover it. CI can catch the rule cheaply, and the consistency check can keep looking for softer drift.
+      </p>
+
+      <p>
+        That split matters because consistency scores are not policy. Scores point attention at unusual code. Convention tests protect settled agreements. Patterns can still evolve, but they evolve by updating exemplars and conventions deliberately, not by letting every new outlier redefine normal.
       </p>
 
       <h2>Start with a cohort</h2>
@@ -227,6 +249,7 @@
         <li>Normalize features before computing distance.</li>
         <li>Read the report as advisory review guidance.</li>
         <li>Promote repeatable deterministic findings into convention tests.</li>
+        <li>Update exemplars when a new pattern becomes intentional.</li>
       </ol>
 
       <p>

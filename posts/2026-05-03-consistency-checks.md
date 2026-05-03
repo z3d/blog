@@ -14,6 +14,8 @@ The check I am describing is fairly small. Pick a cohort of files that solve the
 
 The report is advisory. It should not say "fail the build because this handler scored 6.2." It should say "this handler is far from the exemplars because it has an unusual dependency count, retry shape, cache behavior, or entity-load pattern." Review can then decide whether the file is drift, legitimate local complexity, or the first instance of a pattern that should become an exemplar.
 
+Convention tests come after that review. When an advisory finding turns into a rule the team can state clearly, it should leave the consistency report and become a deterministic test.
+
 Agent-generated code makes this useful because the problem can accumulate quietly. The code compiles, the unit tests pass, and the handler answers the right request. After enough of those changes, though, the codebase can start to feel less like one system and more like a folder of plausible one-offs.
 
 A single handler might only be a little odd: one extra dependency, inline DTO construction, a cache invalidation path no sibling uses. A query might introduce a SQL JOIN in a slice where the surrounding queries are deliberately simple. An EF configuration can tuck a class inside another file even though every other configuration has its own file. None of this is automatically wrong. The point is to make it visible while review still has context.
@@ -25,6 +27,16 @@ Correctness, convention compliance, style, and consistency tend to get blurred t
 If every command has to have a validator, that belongs in a deterministic convention test. If query handlers are not allowed to use EF Core, or command handlers are not allowed to use Dapper, encode that and let CI be boring. A formatter can settle whitespace. An analyzer can catch a narrow syntax rule. None of those tools tells you when a file has all the right ingredients but an unfamiliar shape.
 
 In this work, consistency means idiom: proportions, dependency count, decomposition, cache behavior, private helpers, entity loads, and rare combinations of features. A file can satisfy every convention and still be the one where a reviewer should slow down and ask why it does not resemble its peers.
+
+## Where convention tests fit
+
+Convention tests are for decisions the team has already made. If every command handler must have a validator, that should be a convention test. If query handlers must not use EF Core, or command handlers must not use Dapper, encode the rule directly and let CI catch it every time.
+
+Consistency checks are for questions the team has not fully named yet. A report might show that a handler is far from the exemplars because it constructs DTOs inline instead of using the mapper. The first time that appears, it is a review question. It might be harmless local complexity, or it might be a real convention hiding in plain sight.
+
+Once review decides "we should never do that, except for this one result-summary case", the finding should graduate into a convention test. From then on, the consistency report no longer has to rediscover it. CI can catch the rule cheaply, and the consistency check can keep looking for softer drift.
+
+That split matters because consistency scores are not policy. Scores point attention at unusual code. Convention tests protect settled agreements. Patterns can still evolve, but they evolve by updating exemplars and conventions deliberately, not by letting every new outlier redefine normal.
 
 ## Start with a cohort
 
@@ -110,6 +122,7 @@ The workflow I trust now is:
 4. Normalize features before computing distance.
 5. Read the report as advisory review guidance.
 6. Promote repeatable deterministic findings into convention tests.
+7. Update exemplars when a new pattern becomes intentional.
 
 I am not trying to make every file look the same. I am trying to catch surprise while there is still time to decide whether it belongs.
 
