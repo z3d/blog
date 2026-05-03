@@ -108,23 +108,21 @@ The useful exception was inline DTO construction. The embedding layer flagged ha
 
 That is the relationship I want between the layers. Scores and distance reports are a way to discover candidates for review. Convention tests are where repeatable rules end up.
 
-## Read the score feature by feature
+## Explain the score by feature
 
-The composite distance score was useful for sorting attention, but it did not explain enough on its own. If a report says a handler is a 6.2, review still has to work out what that number is made of.
+The composite distance score was useful as a sort order. It told review which files were worth opening first. It did not, by itself, say what was unusual about a file. A handler can score highly because it is large, because it has a rare control-flow shape, because it loads more entities than the exemplars, or because several smaller differences line up.
 
-Per-feature divergence takes the same fingerprint and turns it sideways. Instead of producing one ranked list of files, it produces a small report for every feature. For each one it asks: what does the exemplar set expect here, which files differ, and by how much?
+The per-feature report keeps those reasons visible. It uses the same fingerprint as the distance score, but reports each feature separately. The output is organised by feature name. For each feature, it shows the exemplar expectation and the files whose values differ enough to matter.
 
-Boolean and numeric features need different treatment. For boolean features, the report compares the file with the nearest exemplar shape. That detail matters when a cohort has legitimate sub-shapes. A paginated query should not be marked divergent just because by-id queries are common; it should be compared with the paginated-list exemplar. Once the nearest exemplar is chosen, the report can say plainly that a handler differs on `HasCacheInvalidator`, `HasTryCatch`, or `IsCacheable`.
+Boolean and numeric features need different treatment. For boolean features, the report compares the file with the nearest exemplar shape, not with a global majority. That avoids false positives in cohorts with valid sub-shapes. A paginated query should be compared with the paginated-list exemplar, not with a by-id query. After that match, a difference such as `HasCacheInvalidator`, `HasTryCatch`, or `IsCacheable` is easy to read.
 
 For numeric features, the report compares against the exemplar mean and spread. If the exemplars usually have two or three constructor dependencies and a handler has seven, the report does not need to hide that inside a 6.2 score. If every query exemplar has zero JOINs, the first handler with a JOIN should be visible even if the rest of the file looks ordinary.
 
-The useful output is not "handler A is far away." It is closer to: `ConstructorDependencyCount` expected roughly 2 or 3 and found 7; `EntityLoadCount` expected 1 and found 4; `HasTryCatch` expected false and found true. That is the level where a reviewer can do something with the result.
+The useful output is not just that one handler is far from the exemplars. It is closer to: `ConstructorDependencyCount` expected roughly 2 or 3 and found 7; `EntityLoadCount` expected 1 and found 4; `HasTryCatch` expected false and found true. That is the level where a reviewer can do something with the result.
 
-That changes the review conversation. "This handler is an outlier" is only a prompt to investigate. "This handler is unusual because it has seven constructor dependencies, loads four entities, and has the only try/catch shape in the cohort" is already review material. The reviewer can ask whether those differences reflect real business complexity, drift, or a pattern that deserves to become part of the cohort.
+That changes the review conversation. Instead of saying only that a handler is an outlier, the report can say that dependency count is high, entity loads are high, and try/catch is present where the exemplars do not use it. Review can then decide whether those facts are expected complexity, accidental drift, or a pattern that should become a convention.
 
-It also separates local oddness from spreading drift. One handler without cache invalidation is probably a local question. Fifteen handlers differing on the same feature means something bigger has moved: the exemplar set may be stale, the convention may have shifted, or a rule needs to be written. Those are different outcomes, and a composite score tends to blur them together.
-
-Composite distance answers "where should I look first?" Per-feature divergence answers the question that matters once you get there: what changed, who changed with it, and is it becoming normal?
+The count of affected files matters too. One handler missing cache invalidation is probably a local question. Fifteen handlers missing it means something bigger has moved: the exemplar set may be stale, the convention may have shifted, or the rule may need to be encoded directly. Those are different outcomes, and the composite score tends to blur them together.
 
 ## What the cohorts surfaced
 
