@@ -3,18 +3,67 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Blog</title>
+  <title>z3d notes</title>
+  <meta name="description" content="Short personal engineering notes from z3d.">
+  <link rel="canonical" href="https://z3d.github.io/blog/">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>Blog</h1>
+  <header class="site-header">
+    <a class="brand" href="./" aria-label="z3d notes home">
+      <span class="brand-mark" aria-hidden="true">z</span>
+      <span>z3d notes</span>
+    </a>
+    <nav class="site-nav" aria-label="Primary">
+      <a href="./" aria-current="page">Posts</a>
+      <a href="https://github.com/z3d/blog">GitHub</a>
+    </nav>
+  </header>
 
-  <p>Notes, projects, and occasional writeups.</p>
+  <main>
+    <section class="home-intro">
+      <p class="eyebrow">Personal engineering notes</p>
+      <h1>z3d notes</h1>
+      <p>
+        Short writeups about code shape, architecture feedback, and keeping software understandable while it changes.
+      </p>
+    </section>
 
-  <h2>Posts</h2>
+    <section class="feature-layout" aria-labelledby="latest-title">
+      <article class="post-card">
+        <time class="post-meta" datetime="2026-05-03">May 3, 2026</time>
+        <h2 id="latest-title">
+          <a href="consistency-checks/">Consistency checks</a>
+        </h2>
+        <p>
+          Convention tests are for rules. Consistency checks are for patterns worth looking at.
+        </p>
+        <a class="read-link" href="consistency-checks/">Read the note</a>
+      </article>
 
-  <ul>
-    <li><span class="meta">2026-05-03</span> - <a href="consistency-checks/">Consistency checks</a></li>
-  </ul>
+      <aside class="signal-panel" aria-label="Consistency check split">
+        <p class="signal-heading">Useful split</p>
+        <dl class="signal-list">
+          <div>
+            <dt>Rules</dt>
+            <dd>Fail the build when the invariant is deterministic.</dd>
+          </div>
+          <div>
+            <dt>Signals</dt>
+            <dd>Review code that drifts away from trusted examples.</dd>
+          </div>
+          <div>
+            <dt>Judgement</dt>
+            <dd>Promote repeated findings into hard conventions.</dd>
+          </div>
+        </dl>
+      </aside>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>z3d</span>
+    <a href="https://github.com/z3d/blog">Repository</a>
+  </footer>
 </body>
 </html>
