@@ -4,9 +4,11 @@ Status: Published
 Date: 2026-05-03
 Author: z3d
 
-Convention tests are good at rules. Consistency checks are for the uneasy middle ground: code that works, passes review in isolation, and still makes the system a little harder to recognize.
+One of the things I noticed when I worked with good developers was how consistent their code was. You could move from one project to another, or from one client to another, and become productive almost immediately.
 
-I started looking at this because agent-generated code has a failure mode that normal tests are not designed to catch. At the local level everything can look fine: the code compiles, the unit tests pass, and the handler answers the right request. After enough of those changes, though, the codebase can start to feel less like one system and more like a folder of plausible one-offs.
+Part of that came from the effort people put into making code consistent. The trepidation of reviewing a complex pull request dropped a lot when everyone wrote code in the same way. You were still responsible for understanding the behavior, but you were not also decoding a new personal style every time you opened a handler, query, or configuration class.
+
+That memory is why I care about measuring consistency. Agent-generated code makes the same problem easier to accumulate: the code compiles, the unit tests pass, and the handler answers the right request. After enough of those changes, though, the codebase can start to feel less like one system and more like a folder of plausible one-offs.
 
 A single handler might only be a little odd: one extra dependency, inline DTO construction, a cache invalidation path no sibling uses. A query might introduce a SQL JOIN in a slice where the surrounding queries are deliberately simple. An EF configuration can tuck a class inside another file even though every other configuration has its own file. None of this is automatically wrong, so I do not want a build failure. I do want the reviewer to notice it.
 
@@ -107,4 +109,4 @@ The workflow I trust now is:
 
 I am not trying to make every file look the same. I am trying to catch surprise while there is still time to decide whether it belongs.
 
-Adapted from z3d's consistency paper and the extracted `Z3D.Consistency` library.
+Adapted from [z3d's consistency paper](https://github.com/z3d/z3d-consistency/blob/main/docs/papers/consistency-in-agent-generated-code.md) and the extracted [Z3D.Consistency](https://github.com/z3d/z3d-consistency) library.

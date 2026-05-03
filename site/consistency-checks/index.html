@@ -30,7 +30,7 @@
         <h1>Measuring consistency in agent-generated code</h1>
         <p class="byline">By <a href="https://github.com/z3d" rel="author">z3d</a></p>
         <p class="dek">
-          Convention tests are good at rules. Consistency checks are for the uneasy middle ground: code that works, passes review in isolation, and still makes the system a little harder to recognize.
+          One of the things I noticed when I worked with good developers was how consistent their code was. You could move from one project to another, or from one client to another, and become productive almost immediately.
         </p>
       </header>
 
@@ -51,7 +51,11 @@
       </figure>
 
       <p>
-        I started looking at this because agent-generated code has a failure mode that normal tests are not designed to catch. At the local level everything can look fine: the code compiles, the unit tests pass, and the handler answers the right request. After enough of those changes, though, the codebase can start to feel less like one system and more like a folder of plausible one-offs.
+        Part of that came from the effort people put into making code consistent. The trepidation of reviewing a complex pull request dropped a lot when everyone wrote code in the same way. You were still responsible for understanding the behavior, but you were not also decoding a new personal style every time you opened a handler, query, or configuration class.
+      </p>
+
+      <p>
+        That memory is why I care about measuring consistency. Agent-generated code makes the same problem easier to accumulate: the code compiles, the unit tests pass, and the handler answers the right request. After enough of those changes, though, the codebase can start to feel less like one system and more like a folder of plausible one-offs.
       </p>
 
       <p>
@@ -222,7 +226,7 @@
       </p>
 
       <p class="source-note">
-        Adapted from z3d&apos;s consistency paper and the extracted <code>Z3D.Consistency</code> library.
+        Adapted from <a href="https://github.com/z3d/z3d-consistency/blob/main/docs/papers/consistency-in-agent-generated-code.md">z3d&apos;s consistency paper</a> and the extracted <a href="https://github.com/z3d/z3d-consistency"><code>Z3D.Consistency</code></a> library.
       </p>
     </article>
   </main>
