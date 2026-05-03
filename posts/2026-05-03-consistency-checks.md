@@ -4,7 +4,7 @@ Status: Published
 Date: 3 May 2026
 Author: z3d
 
-One of the things I noticed when I worked with good developers was how consistent their code was. You could move from one project to another, or from one client to another, and become productive almost immediately.
+One of the things I noticed when I worked with good developers was how consistent their code was. You could move from one project to another and become productive almost immediately.
 
 Part of it was the significant amount of effort that went into developer experience, but equally important was the consistency that permeated all the repositories. Patterns still evolved, but they evolved in a controlled and deliberate way.
 
@@ -56,6 +56,12 @@ A consistency check only makes sense inside a cohort, meaning a group of files t
 - 20 query handlers.
 - 26 EF Core configurations.
 
+In this kind of .NET application, a command handler receives a request that changes state. It loads entities, calls domain methods, saves changes, invalidates caches, and returns a DTO. A query handler receives a read request and returns read-model data. It should usually be thinner, dependency-light, and shaped around the kind of result it returns. Treating both as just "handlers" would hide the fact that they are meant to use different approaches.
+
+Those categories were useful because they had enough members, a clear role, and different kinds of legitimate variation. The command handlers were not one identical template. The exemplar set covered a small state transition, an entity creation path with cross-entity validation, and a heavier orchestration path that touched several reads before writing. The query handlers had a cleaner split: by-id lookup, bounded list, and paginated list. The EF configurations ranged from small table mappings to richer aggregate mappings.
+
+That matters because measuring consistency is not the same as forcing every file into one shape. If a cohort has several intended shapes, the exemplar set needs to preserve them. Otherwise the tool will punish ordinary variation and call it drift.
+
 Each cohort needs three to five pinned exemplars. I would not compute against the current average of the whole cohort, because the current average can already contain the drift you are trying to find. Once drift is baked into the reference point, new drift starts looking normal.
 
 The exemplars are the files you would point a new engineer, or a new agent session, at and say: write like this. They need written justification and review, because they become part of the measuring instrument. They should represent the intended shape of the cohort, not the longest file, the most defensive file, or whatever happened to land first.
@@ -80,11 +86,17 @@ That is the rule I would keep: normalise before calculating distance, and always
 
 ## What the scoring layers showed
 
-The implementation tried three scoring layers: structural distance, AST/IL shingle similarity, and embedding distance. I expected three mostly independent signals. What I got was more useful than that, but less elegant.
+The implementation tried three ways to compare a file with the exemplars: structural distance, AST/IL shingle similarity, and embedding distance. I expected three mostly independent signals. What I got was more useful than that, but less elegant.
 
-Structural distance carried the work once normalisation was fixed. It found files with unusual combinations of features: more entity loads than the cohort expected, different dependency counts, retry shapes, private helpers, try/catch blocks. Shingle similarity was more like a second opinion. It often moved with structural distance, but it still helped when two files had similar feature vectors and different skeletons.
+The structural layer is where Mahalanobis distance came in. Each file became a point in feature space. Plain distance asks how far that point is from the exemplar centre. Mahalanobis asks a better question: given how the exemplar features usually move together, how surprising is this combination of values? A bigger handler with more private helpers may be normal for the cohort. A handler with an ordinary size but an unusual dependency count, try/catch shape, and entity-load pattern may be much more interesting.
 
-Embedding distance was the least reliable scoring layer. It often noticed vocabulary before it noticed design. A handler with domain-specific names can look far from the exemplars even when its shape is normal. That makes embeddings noisy as a score.
+That is why normalisation mattered so much. Mahalanobis can account for feature scale and correlation, but only after the inputs are put on comparable footing. With a small exemplar set, the covariance estimate also needs regularisation so the score does not become brittle. The practical version is simple enough: when there is not enough evidence to trust feature correlations, the score falls back towards standardised distance; when the cohort has enough signal, the correlations start to matter.
+
+Structural distance carried the work once normalisation was fixed. It found files with unusual combinations of features: more entity loads than the cohort expected, different dependency counts, retry shapes, private helpers, try/catch blocks.
+
+The shingle layer took a different approach. It ignored names and most operands, looked at short runs of IL opcodes, and asked whether the file's skeleton resembled the exemplar skeletons. I wanted this to catch the "same feature vector, different control flow" case. It did that sometimes, but it often moved with structural distance. That made it useful as a second opinion, not a separate source of truth.
+
+The embedding layer was the third approach. It turned each file's source tokens into a vector and compared those vectors with cosine similarity, hoping to find files that looked structurally normal but talked about a different problem. In practice it often noticed vocabulary before it noticed design. A handler with domain-specific names can look far from the exemplars even when its shape is normal. That makes embeddings noisy as a score.
 
 The useful exception was inline DTO construction. The embedding layer flagged handlers that built DTOs directly instead of using the matching mapper. It probably found them for vocabulary reasons, but the pattern was real. Once we understood it, the right move was to stop treating it as an embedding result and turn it into a convention test.
 
