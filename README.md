@@ -1,6 +1,6 @@
 # Blog
 
-Static GitHub Pages site for notes and occasional writeups.
+Static GitHub Pages site for notes about development.
 
 Live site: <https://z3d.github.io/blog/>
 
