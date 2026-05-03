@@ -72,27 +72,33 @@ The lesson is simple, but easy to miss when the report looks official: a weak fe
 
 ## What the scoring layers showed
 
-The framework tried three scoring layers: structural distance, AST/IL shingle similarity, and embedding distance. I expected the layers to disagree in useful ways. The case study was less dramatic than that.
+The implementation tried three scoring layers: structural distance, AST/IL shingle similarity, and embedding distance. I expected three mostly independent signals. What I got was more useful than that, but less elegant.
 
-Structural distance carried most of the useful signal once normalization was fixed. Shingle similarity often moved with it, though it still helped when two files had similar feature vectors and different skeletons. Embedding distance was the noisiest layer. It tended to notice vocabulary before it noticed design.
+Structural distance carried the work once normalization was fixed. It found files with unusual combinations of features: more entity loads than the cohort expected, different dependency counts, retry shapes, private helpers, try/catch blocks. Shingle similarity was more like a second opinion. It often moved with structural distance, but it still helped when two files had similar feature vectors and different skeletons.
 
-Embeddings were still useful once: they overlapped with handlers that were constructing DTOs inline instead of using the matching mapper. The embedding layer probably noticed vocabulary, not intent, but the pattern it surfaced was real. After that, the right move was not to keep admiring the embedding score; the pattern graduated into a deterministic convention test.
+Embedding distance was the least reliable scoring layer. It often noticed vocabulary before it noticed design. A handler with domain-specific names can look far from the exemplars even when its shape is normal. That makes embeddings noisy as a score.
 
-That relationship feels right to me. Consistency scores are a staging ground. When the same advisory signal keeps pointing at a rule you can state absolutely, move it out of the advisory system and into a convention test.
+The useful exception was inline DTO construction. The embedding layer flagged handlers that built DTOs directly instead of using the matching mapper. It probably found them for vocabulary reasons, but the pattern was real. Once we understood it, the right move was to stop treating it as an embedding result and turn it into a convention test.
+
+That is the relationship I want between the layers. Scores and distance reports are a way to discover candidates for review. Convention tests are where repeatable rules end up.
 
 ## Per-feature divergence explained the score
 
-The composite distance score was useful for sorting attention, but per-feature divergence did more of the explanatory work.
+The composite distance score was useful for sorting attention, but it did not explain enough on its own. If a report says a handler is a 6.2, the next question is obvious: why?
 
-Instead of asking which file is farthest from a centroid, the divergence report asks which members differ from the exemplars on each feature. A line like "15 handlers differ from the exemplar on HasCacheInvalidator" is easier to review than a single floating-point distance. It tells you what changed, where to look, and whether the difference is isolated or spreading through the cohort.
+Per-feature divergence answered that better. Instead of asking which file is farthest from a centroid, it asks which members differ from the exemplars on each feature. A line like "15 handlers differ from the exemplar on HasCacheInvalidator" is easier to review than a single floating-point distance. It tells you what changed, where to look, and whether the difference is isolated or spreading through the cohort.
 
 Composite distance answers "where should I look first?" Per-feature divergence answers the question that matters once you get there: what is different?
 
-## Case studies
+## What the cohorts surfaced
+
+The three cohorts were useful because they failed in different ways. Command handlers tested whether the feature vector could separate size from shape. Query handlers tested whether one cohort could contain multiple legitimate sub-shapes. EF configurations tested whether the machinery could find a convention nobody had bothered to name.
 
 ### Command handlers
 
-The command-handler cohort had 34 members and seven features. Before normalization, the largest handlers dominated the report. After normalization, the strongest outliers were two handlers that wrapped work in SERIALIZABLE transactions with retry and rollback. They were not wrong; they were carrying legitimate business complexity. The report still did its job by saying, in effect, "this is structurally unusual, please look at it."
+The command-handler cohort had 34 members and seven features. Before normalization, the largest handlers dominated the report. After normalization, the strongest outliers were two handlers that wrapped work in SERIALIZABLE transactions with retry and rollback.
+
+Those handlers were not wrong. They were carrying legitimate business complexity. The report still did its job because it did not say "fail this." It said "this is structurally unusual, please look at it." That is the right level of confidence for this kind of tool.
 
 The same cohort also surfaced the inline DTO construction pattern. That one was not just unusual; it was a rule hiding in plain sight. Once found, it became a convention test that catches DTO construction through IL inspection and skips the one result-summary case where no mapper should exist.
 
@@ -100,13 +106,17 @@ The same cohort also surfaced the inline DTO construction pattern. That one was 
 
 The query-handler cohort had 20 members and three sub-shapes: by-id single-row, unpaginated list, and paginated list. Pinning one exemplar from each sub-shape mattered because there was no honest "average query handler" in that set. A single canonical exemplar would have produced a centroid that represented none of the real shapes well.
 
-The only strong outlier was the query using a SQL JOIN. That was a good advisory result: unusual, worth noticing, and still defensible as legitimate complexity. The cohort also helped move list-query caching from an advisory concern into a hard convention, because list caches could not be reliably invalidated with the available cache abstraction.
+The only strong outlier was the query using a SQL JOIN. That was a good advisory result: unusual, worth noticing, and still defensible as legitimate complexity. Nothing about the score could decide that for us. It just made the question hard to miss.
+
+The same cohort also helped move list-query caching from an advisory concern into a hard convention, because list caches could not be reliably invalidated with the available cache abstraction.
 
 ### EF configurations
 
-The EF-configuration cohort had 26 members. It pinned a minimal config, a canonical mid-range config, and a richer aggregate config. On the first run, governance caught a configuration class nested inside another configuration file. Every other configuration had its own file, but the rule had never been named, so the exception had been tolerated. Once surfaced, it was obvious enough to fix and enforce.
+The EF-configuration cohort had 26 members. It pinned a minimal config, a canonical mid-range config, and a richer aggregate config. On the first run, governance caught a configuration class nested inside another configuration file.
 
-## Do not gate on the score
+Every other configuration had its own file, but the rule had never been named, so the exception had been tolerated. Once surfaced, it was obvious enough to fix and enforce. That is the best kind of result for this system: it found a convention that already existed socially and made it explicit.
+
+## Keep scores advisory
 
 A consistency score should not fail a merge. Distance has a known pathology: it punishes the first good example of a new pattern and rewards the tenth copy of a bad one. If unusual means blocked, the codebase cannot evolve.
 
@@ -114,7 +124,7 @@ Use the score to rank attention, not to label files good or bad. An outlier has 
 
 For that reason, the consistency suite should include a meta-test that prevents literal threshold gates from creeping in. If a test starts saying "distance must be less than 5.0", the advisory layer has quietly become a brittle policy layer.
 
-## Where prompts fit
+## Use prompts for explanation, not scoring
 
 It is tempting to give an LLM the candidate file and the exemplars, then ask whether the candidate is consistent. I think that can be useful commentary, but I would not make it the measuring layer.
 
@@ -122,7 +132,7 @@ Prompt-based judges are not stable enough to trend, and they may share the same 
 
 The one open area where a prompt might earn a scoring role is semantic duplication: given the nearest existing handlers, is this new handler solving the same problem under a different name? I would still leave that unbuilt until there is a real case to tune against.
 
-## The practical loop
+## The loop I would run
 
 The workflow I trust now is:
 
