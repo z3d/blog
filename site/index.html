@@ -21,24 +21,47 @@
   </header>
 
   <main>
-    <section class="home-intro">
-      <p class="eyebrow">Personal engineering notes</p>
-      <h1>z3d notes</h1>
-      <p>
-        Short writeups about code shape, architecture feedback, and keeping software understandable while it changes.
-      </p>
+    <section class="home-hero">
+      <div class="hero-scene" aria-hidden="true">
+        <div class="trace trace-a"></div>
+        <div class="trace trace-b"></div>
+        <div class="trace trace-c"></div>
+        <span class="scene-node node-a">rule</span>
+        <span class="scene-node node-b">signal</span>
+        <span class="scene-node node-c">review</span>
+        <span class="scene-node node-d">promote</span>
+      </div>
+      <div class="hero-copy">
+        <p class="eyebrow">Personal engineering notes</p>
+        <h1>z3d notes</h1>
+        <p>
+          Short writeups about code shape, architecture feedback, and keeping software understandable while it changes.
+        </p>
+        <div class="hero-actions" aria-label="Featured links">
+          <a class="primary-link" href="consistency-checks/">Read latest</a>
+          <a href="https://github.com/z3d/blog">View source</a>
+        </div>
+      </div>
     </section>
 
     <section class="feature-layout" aria-labelledby="latest-title">
       <article class="post-card">
-        <time class="post-meta" datetime="2026-05-03">May 3, 2026</time>
-        <h2 id="latest-title">
-          <a href="consistency-checks/">Consistency checks</a>
-        </h2>
-        <p>
-          Convention tests are for rules. Consistency checks are for patterns worth looking at.
-        </p>
-        <a class="read-link" href="consistency-checks/">Read the note</a>
+        <div class="post-card-content">
+          <time class="post-meta" datetime="2026-05-03">May 3, 2026</time>
+          <h2 id="latest-title">
+            <a href="consistency-checks/">Consistency checks</a>
+          </h2>
+          <p>
+            Convention tests are for rules. Consistency checks are for patterns worth looking at.
+          </p>
+          <a class="read-link" href="consistency-checks/">Read the note</a>
+        </div>
+        <div class="post-meter" aria-hidden="true">
+          <span class="meter-line meter-strong"></span>
+          <span class="meter-line meter-soft"></span>
+          <span class="meter-line meter-warn"></span>
+          <span class="meter-dot"></span>
+        </div>
       </article>
 
       <aside class="signal-panel" aria-label="Consistency check split">
