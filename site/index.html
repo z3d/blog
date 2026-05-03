@@ -21,67 +21,26 @@
     </nav>
   </header>
 
-  <main>
-    <section class="home-hero">
-      <div class="hero-scene" aria-hidden="true">
-        <div class="trace trace-a"></div>
-        <div class="trace trace-b"></div>
-        <div class="trace trace-c"></div>
-        <span class="scene-node node-a">cohort</span>
-        <span class="scene-node node-b">exemplar</span>
-        <span class="scene-node node-c">signal</span>
-        <span class="scene-node node-d">convention</span>
-      </div>
-      <div class="hero-copy">
-        <p class="eyebrow">Notes about development</p>
-        <h1>Developer notes</h1>
-        <p>
-          Short writeups about building software, shaping code, and keeping systems understandable while they change.
-        </p>
-        <div class="hero-actions" aria-label="Featured links">
-          <a class="primary-link" href="consistency-checks/">Read latest</a>
-          <a href="https://github.com/z3d">GitHub</a>
-        </div>
-      </div>
+  <main class="home-shell">
+    <section class="home-intro">
+      <p class="eyebrow">Notes about development</p>
+      <h1>Developer notes</h1>
+      <p>
+        Short writeups about building software, shaping code, and keeping systems understandable while they change.
+      </p>
     </section>
 
-    <section class="feature-layout" aria-labelledby="latest-title">
-      <article class="post-card">
-        <div class="post-card-content">
-          <time class="post-meta" datetime="2026-05-03">3 May 2026</time>
-          <h2 id="latest-title">
-            <a href="consistency-checks/">Measuring consistency in agent-generated code</a>
-          </h2>
-          <p>
-            What fell out of measuring drift across command handlers, query handlers, and EF configurations.
-          </p>
-          <a class="read-link" href="consistency-checks/">Read the note</a>
-        </div>
-        <div class="post-meter" aria-hidden="true">
-          <span class="meter-line meter-strong"></span>
-          <span class="meter-line meter-soft"></span>
-          <span class="meter-line meter-warn"></span>
-          <span class="meter-dot"></span>
-        </div>
+    <section class="post-list" aria-labelledby="latest-title">
+      <article class="post-list-item">
+        <time class="post-meta" datetime="2026-05-03">3 May 2026</time>
+        <h2 id="latest-title">
+          <a href="consistency-checks/">Measuring consistency in agent-generated code</a>
+        </h2>
+        <p>
+          What fell out of measuring drift across command handlers, query handlers, and EF configurations.
+        </p>
+        <a class="read-link" href="consistency-checks/">Read the note</a>
       </article>
-
-      <aside class="signal-panel" aria-label="Consistency measurement outline">
-        <p class="signal-heading">The shape</p>
-        <dl class="signal-list">
-          <div>
-            <dt>Cohorts</dt>
-            <dd>Measure files against peers that solve the same kind of problem.</dd>
-          </div>
-          <div>
-            <dt>Exemplars</dt>
-            <dd>Pin trusted examples so drift cannot redefine the average.</dd>
-          </div>
-          <div>
-            <dt>Signals</dt>
-            <dd>Use scores to direct review, then promote stable findings into convention tests.</dd>
-          </div>
-        </dl>
-      </aside>
     </section>
   </main>
 
