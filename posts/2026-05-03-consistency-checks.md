@@ -10,13 +10,15 @@ Part of it was the significant amount of effort that went into developer experie
 
 That consistency is what I wanted to measure once agents started writing more of the code.
 
+I should be clear about how this came together. I am years away from my CS degree and the university statistics courses where I last had to think seriously about this kind of thing. My starting point was vague: some kind of eigenvector characterisation of code shape. I let Claude Code and Codex guide the translation from that hunch into something I could actually try against a codebase.
+
 The check I am describing is fairly small. Pick a cohort of files that solve the same kind of problem. Pin a few examples that show the intended shape. Extract a feature vector from every file in the cohort, normalise those features, then report which files have moved away from the examples and which features caused the movement.
 
 The report is advisory. It should not say "fail the build because this handler scored 6.2." It should say "this handler is far from the exemplars because it has an unusual dependency count, retry shape, cache behaviour, or entity-load pattern." Review can then decide whether the file is drift, legitimate local complexity, or the first instance of a pattern that should become an exemplar.
 
 Convention tests come after that review. When an advisory finding turns into a rule the team can state clearly, it should leave the consistency report and become a deterministic test.
 
-Agent-generated code makes this useful because the problem can accumulate quietly. The code compiles, the unit tests pass, and the handler answers the right request. After enough of those changes, though, the codebase could start to feel less like one system and more like a folder of plausible one-offs.
+Agent-generated code makes this useful because the problem can accumulate quietly. The code compiles, the unit tests pass, and the handler answers the right request. The cost shows up later, when someone has to change the system and cannot tell which nearby file represents the intended pattern. Does this kind of handler load entities before validation? Should it invalidate a cache? Should this query use Dapper or EF Core? If every file answers those questions differently, the next change starts with rediscovery.
 
 A fair objection is that generated code may never be perfectly consistent. I agree with that. Perfect sameness is not the goal. The goal is that a human can come back later, without the original prompt or the same model, and still understand how the codebase wants to be changed. The tools are unlikely to vanish, but the code should still be maintainable by the people responsible for it.
 
@@ -91,6 +93,8 @@ After normalising the features, the report changed. Entity loads, IL byte size, 
 That is the rule I would keep: normalise before calculating distance, and always show which features drove the score. Otherwise the number can look objective while mostly measuring the wrong thing.
 
 ## What the scoring layers showed
+
+The three comparisons are where Claude Code and Codex most directly shaped the work. I had the shape of the problem, but not a clean statistical design. They suggested trying one structural measure, one compiled-shape measure, and one vocabulary measure, then checking which of those signals actually helped.
 
 The implementation used three comparisons, each asking a different question. Structural distance asked whether a file's measurements were unusual for the cohort. Shingle similarity asked whether the compiled shape of the code resembled the exemplars, ignoring most names and operands. Embedding distance asked whether the file used the same source vocabulary as the exemplars.
 

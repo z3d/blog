@@ -59,6 +59,10 @@
       </p>
 
       <p>
+        I should be clear about how this came together. I am years away from my CS degree and the university statistics courses where I last had to think seriously about this kind of thing. My starting point was vague: some kind of eigenvector characterisation of code shape. I let Claude Code and Codex guide the translation from that hunch into something I could actually try against a codebase.
+      </p>
+
+      <p>
         The check I am describing is fairly small. Pick a cohort of files that solve the same kind of problem. Pin a few examples that show the intended shape. Extract a feature vector from every file in the cohort, normalise those features, then report which files have moved away from the examples and which features caused the movement.
       </p>
 
@@ -71,7 +75,7 @@
       </p>
 
       <p>
-        Agent-generated code makes this useful because the problem can accumulate quietly. The code compiles, the unit tests pass, and the handler answers the right request. After enough of those changes, though, the codebase could start to feel less like one system and more like a folder of plausible one-offs.
+        Agent-generated code makes this useful because the problem can accumulate quietly. The code compiles, the unit tests pass, and the handler answers the right request. The cost shows up later, when someone has to change the system and cannot tell which nearby file represents the intended pattern. Does this kind of handler load entities before validation? Should it invalidate a cache? Should this query use Dapper or EF Core? If every file answers those questions differently, the next change starts with rediscovery.
       </p>
 
       <p>
@@ -207,6 +211,10 @@
       </p>
 
       <h2>What the scoring layers showed</h2>
+
+      <p>
+        The three comparisons are where Claude Code and Codex most directly shaped the work. I had the shape of the problem, but not a clean statistical design. They suggested trying one structural measure, one compiled-shape measure, and one vocabulary measure, then checking which of those signals actually helped.
+      </p>
 
       <p>
         The implementation used three comparisons, each asking a different question. Structural distance asked whether a file's measurements were unusual for the cohort. Shingle similarity asked whether the compiled shape of the code resembled the exemplars, ignoring most names and operands. Embedding distance asked whether the file used the same source vocabulary as the exemplars.
