@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Consistency checks</title>
+  <meta name="description" content="A short note on keeping repeated code patterns from drifting.">
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+  <p><a href="../">Home</a></p>
+
+  <h1>Consistency checks</h1>
+
+  <p class="meta">2026-05-03</p>
+
+  <p>Convention tests are for rules. Consistency checks are for patterns worth looking at.</p>
+
+  <p>Some architecture rules are simple enough to fail a build. If every command needs a validator, write that as a convention test and let CI enforce it.</p>
+
+  <p>Other things are softer. A handler might have more dependencies than usual. A query might have a shape that does not look like the rest of the queries. That does not always mean it is wrong, but it is worth noticing.</p>
+
+  <p>I have been treating those as consistency checks: compare repeated code patterns, report outliers, and leave the decision to review.</p>
+
+  <h2>The split</h2>
+
+  <p>Convention tests should be boring. They encode rules that are always true.</p>
+
+  <ul>
+    <li>Commands and queries have validators.</li>
+    <li>Query handlers do not use EF Core.</li>
+    <li>Command handlers do not use Dapper.</li>
+    <li>SQL queries avoid <code>SELECT *</code>.</li>
+  </ul>
+
+  <p>Consistency checks are different. They answer a weaker question: does this file look unusually far from the examples we trust?</p>
+
+  <h2>Why keep them advisory?</h2>
+
+  <p>Because unusual code can be the right code. Turning every outlier into a failure makes the test suite noisy and brittle.</p>
+
+  <p>The useful loop is smaller: report the drift, review it, and only promote it to a convention when the same issue keeps mattering.</p>
+
+  <h2>The point</h2>
+
+  <p>The goal is not to make a codebase uniform. The goal is to make surprise visible early enough that someone can decide whether it belongs.</p>
+</body>
+</html>

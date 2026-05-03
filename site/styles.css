@@ -1,39 +1,24 @@
-:root {
-  color-scheme: light;
-  --text: #1f2328;
-  --muted: #59636e;
-  --link: #0969da;
-  --border: #d1d9e0;
-  --code-bg: #f6f8fa;
-}
-
-* {
-  box-sizing: border-box;
-}
-
 body {
-  margin: 0;
-  padding: 32px 24px 64px;
-  color: var(--text);
-  background: #fff;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
-  font-size: 16px;
-  line-height: 1.5;
-}
-
-main {
-  width: min(100%, 760px);
   max-width: 760px;
-  margin: 0 auto;
+  margin: 40px auto;
+  padding: 0 20px 64px;
+  color: #111;
+  background: #fff;
+  font: 16px/1.55 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 a {
-  color: var(--link);
-  text-decoration: none;
+  color: #0645ad;
 }
 
-a:hover {
-  text-decoration: underline;
+h1,
+h2,
+h3 {
+  line-height: 1.25;
+}
+
+h1 {
+  margin-top: 0;
 }
 
 p,
@@ -41,82 +26,36 @@ ul,
 ol,
 pre,
 blockquote {
-  margin: 0 0 16px;
-  overflow-wrap: break-word;
-}
-
-h1,
-h2,
-h3 {
-  margin: 24px 0 16px;
-  font-weight: 600;
-  line-height: 1.25;
-}
-
-h1 {
-  margin-top: 0;
-  padding-bottom: 0.3em;
-  border-bottom: 1px solid var(--border);
-  font-size: 2em;
-}
-
-h2 {
-  padding-bottom: 0.3em;
-  border-bottom: 1px solid var(--border);
-  font-size: 1.5em;
-}
-
-h3 {
-  font-size: 1.25em;
+  margin: 0 0 1rem;
 }
 
 ul,
 ol {
-  padding-left: 2em;
+  padding-left: 1.5rem;
 }
 
-li + li {
-  margin-top: 0.25em;
-}
-
-hr {
-  height: 0.25em;
-  margin: 24px 0;
-  border: 0;
-  background: var(--border);
-}
-
-blockquote {
-  padding: 0 1em;
-  border-left: 0.25em solid var(--border);
-  color: var(--muted);
+code,
+pre {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
 }
 
 code {
-  padding: 0.2em 0.4em;
-  border-radius: 6px;
-  background: var(--code-bg);
-  font-family: ui-monospace, SFMono-Regular, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
-  font-size: 85%;
+  background: #f6f6f6;
+  padding: 0.1rem 0.25rem;
 }
 
 pre {
   overflow-x: auto;
-  padding: 16px;
-  border-radius: 6px;
-  background: var(--code-bg);
+  background: #f6f6f6;
+  padding: 1rem;
 }
 
-pre code {
-  padding: 0;
-  background: transparent;
-  font-size: 100%;
+blockquote {
+  border-left: 3px solid #ddd;
+  color: #555;
+  padding-left: 1rem;
 }
 
 .meta {
-  color: var(--muted);
-}
-
-.top-links {
-  margin-bottom: 24px;
+  color: #666;
 }

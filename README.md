@@ -6,7 +6,7 @@ Live site: <https://z3d.github.io/blog/>
 
 ## Posts
 
-- [Consistency checks](site/blog/consistency-checks/)
+- [Consistency checks](site/consistency-checks/)
 
 ## Development
 
