@@ -92,7 +92,9 @@ That is the rule I would keep: normalise before calculating distance, and always
 
 ## What the scoring layers showed
 
-The implementation tried three ways to compare a file with the exemplars: structural distance, AST/IL shingle similarity, and embedding distance. I expected three mostly independent signals. What I got was more useful than that, but less elegant.
+The implementation used three comparisons, each asking a different question. Structural distance asked whether a file's measurements were unusual for the cohort. Shingle similarity asked whether the compiled shape of the code resembled the exemplars, ignoring most names and operands. Embedding distance asked whether the file used the same source vocabulary as the exemplars.
+
+I expected those answers to disagree enough to justify all three layers. In practice, structural distance did most of the work, shingles mostly confirmed it, and embeddings helped only when the vocabulary difference pointed to a concrete pattern.
 
 The structural layer is where Mahalanobis distance came in. Each file became a point in feature space. Plain distance asks how far that point is from the exemplar centre. Mahalanobis asks a better question: given how the exemplar features usually move together, how surprising is this combination of values? A bigger handler with more private helpers may be normal for the cohort. A handler with an ordinary size but an unusual dependency count, try/catch shape, and entity-load pattern may be much more interesting.
 
