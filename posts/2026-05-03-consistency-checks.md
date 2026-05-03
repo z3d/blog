@@ -12,9 +12,9 @@ That consistency is what I wanted to measure once agents started writing more of
 
 I should be clear about how this came together. The consistency problem was mine: I wanted a way to notice when generated code stopped resembling the code around it. I am years away from my CS degree and the university statistics courses where I last had to think seriously about this kind of thing. The vague measurement idea was some kind of eigenvector characterisation of code shape. I let Claude Code and Codex guide the translation from that hunch into something I could actually try against a codebase.
 
-The testable version ended up smaller than the hunch. One part of it turns each file into a row of measurements: IL byte size, constructor dependency count, whether the handler has cache invalidation, whether it uses try/catch, entity load count, and so on.
+The version that actually runs is narrower than that. It is an xUnit test suite around a report builder. For the structural part, each file becomes a fingerprint: a row of measurements such as IL byte size, constructor dependency count, whether the handler has cache invalidation, whether it uses try/catch, entity load count, and so on.
 
-The output is a consistency report for review. It checks the measurement row, compiled shape, and source vocabulary, but the basic loop is simple. Pick a cohort of files that solve the same kind of problem. Pin a few examples that show the intended shape. Compare the rest of the cohort with those examples, then report which files look furthest away and why.
+The report builder also checks compiled shape and source vocabulary. The basic loop is still simple. Pick a cohort of files that solve the same kind of problem. Pin a few examples that show the intended shape. Compare the rest of the cohort with those examples, then report which files look furthest away and why.
 
 Because it is for review, the report is advisory. It should not say "fail the build because this handler scored 6.2." It should say "this handler is far from the exemplars because it has an unusual dependency count, retry shape, cache behaviour, or entity-load pattern." Review can then decide whether the file is drift, legitimate local complexity, or the first instance of a pattern that should become an exemplar.
 
@@ -71,6 +71,22 @@ That matters because measuring consistency is not the same as forcing every file
 Each cohort needs three to five pinned exemplars. I would not compute against the current average of the whole cohort, because the current average can already contain the drift you are trying to find. Once drift is baked into the reference point, new drift starts looking normal.
 
 The exemplars are the files you would point a new engineer, or a new agent session, at and say: write like this. They need written justification and review, because they become part of the measuring instrument. They should represent the intended shape of the cohort, not the longest file, the most defensive file, or whatever happened to land first.
+
+## How it runs
+
+In the implementation, this is not a separate service and it is not an LLM judge in CI. It runs as ordinary xUnit tests in the application test project. The extracted library keeps the same shape, but moves the reusable parts into `Z3D.Consistency` and the shared test bases into `Z3D.Consistency.Xunit`.
+
+Each cohort implements `ICohortDefinition<TFingerprint>`. That definition has four jobs: give the cohort a name, discover the member types, extract one fingerprint from each type, and list the pinned exemplar type names.
+
+For command handlers, discovery reflects over the API assembly, keeps concrete classes whose names end in `CommandHandler`, and checks that they implement the mediator handler interface. Extraction then inspects the constructor and IL. The row records IL byte size, dependency count, logger presence, cache invalidator dependency, try/catch usage, private method count, and entity-load calls.
+
+Query handlers use a different row because they have a different job. They are discovered as `QueryHandler` types, then measured for query-shaped things: dependency count, pagination, cache opt-in, list return shape, SQL statement count, and `JOIN` or `APPLY` usage. EF Core configurations get another row again: fluent API counts such as `OwnsOne`, `HasIndex`, `Property`, `HasConversion`, and `HasMany`.
+
+The report builder then does the common work. It calls `DiscoverTypes()`, calls `Extract(type)` for every discovered type, resolves the exemplar names against those fingerprints, and builds four outputs. Structural scores are sorted by distance from the exemplar shape. IL shingle scores are sorted from least to most similar compiled skeleton. Source-token scores are sorted from least to most similar vocabulary. The per-feature divergence report groups the differences by measurement, so review can see which files differed on `ConstructorDependencyCount`, `HasTryCatch`, `JoinCount`, or another feature.
+
+The tests print that report to xUnit output. They also check the machinery around it: discovery still matches the files on disk, fingerprints are not empty, exemplar names in code match the README, every exemplar has a written justification, and scoring is anchored on the exemplar set rather than the whole cohort. A separate meta-test scans the consistency tests to stop hardcoded distance thresholds from creeping in.
+
+That guardrail matters. The suite can fail when the measuring instrument is broken, or when a deterministic convention test is broken. It should not fail just because one handler is far away. A high distance gets printed with reasons so review can decide whether it is drift, valid complexity, or a new pattern worth promoting.
 
 ## Normalise before believing the number
 
