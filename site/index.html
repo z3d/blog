@@ -3,16 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Development notes</title>
-  <meta name="description" content="Notes about development from z3d.">
+  <title>Developer notes</title>
+  <meta name="description" content="Developer notes by z3d.">
+  <meta name="author" content="z3d">
   <link rel="canonical" href="https://z3d.github.io/blog/">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header class="site-header">
-    <a class="brand" href="./" aria-label="Development notes home">
+    <a class="brand" href="./" aria-label="Developer notes home">
       <span class="brand-mark" aria-hidden="true">z</span>
-      <span>Development notes</span>
+      <span>Developer notes</span>
     </a>
     <nav class="site-nav" aria-label="Primary">
       <a href="./" aria-current="page">Posts</a>
@@ -26,14 +27,14 @@
         <div class="trace trace-a"></div>
         <div class="trace trace-b"></div>
         <div class="trace trace-c"></div>
-        <span class="scene-node node-a">rule</span>
-        <span class="scene-node node-b">signal</span>
-        <span class="scene-node node-c">review</span>
-        <span class="scene-node node-d">promote</span>
+        <span class="scene-node node-a">cohort</span>
+        <span class="scene-node node-b">exemplar</span>
+        <span class="scene-node node-c">signal</span>
+        <span class="scene-node node-d">convention</span>
       </div>
       <div class="hero-copy">
         <p class="eyebrow">Notes about development</p>
-        <h1>Development notes</h1>
+        <h1>Developer notes</h1>
         <p>
           Short writeups about building software, shaping code, and keeping systems understandable while they change.
         </p>
@@ -49,10 +50,10 @@
         <div class="post-card-content">
           <time class="post-meta" datetime="2026-05-03">May 3, 2026</time>
           <h2 id="latest-title">
-            <a href="consistency-checks/">Consistency checks</a>
+            <a href="consistency-checks/">Measuring consistency in agent-generated code</a>
           </h2>
           <p>
-            Convention tests are for rules. Consistency checks are for patterns worth looking at.
+            A case-study note on cohorts, pinned exemplars, normalized distance, and why consistency scores should stay advisory.
           </p>
           <a class="read-link" href="consistency-checks/">Read the note</a>
         </div>
@@ -64,20 +65,20 @@
         </div>
       </article>
 
-      <aside class="signal-panel" aria-label="Consistency check split">
-        <p class="signal-heading">Useful split</p>
+      <aside class="signal-panel" aria-label="Consistency measurement outline">
+        <p class="signal-heading">The shape</p>
         <dl class="signal-list">
           <div>
-            <dt>Rules</dt>
-            <dd>Fail the build when the invariant is deterministic.</dd>
+            <dt>Cohorts</dt>
+            <dd>Measure files against peers that solve the same kind of problem.</dd>
+          </div>
+          <div>
+            <dt>Exemplars</dt>
+            <dd>Pin trusted examples so drift cannot redefine the average.</dd>
           </div>
           <div>
             <dt>Signals</dt>
-            <dd>Review code that drifts away from trusted examples.</dd>
-          </div>
-          <div>
-            <dt>Judgement</dt>
-            <dd>Promote repeated findings into hard conventions.</dd>
+            <dd>Use scores to direct review, then promote stable findings into convention tests.</dd>
           </div>
         </dl>
       </aside>

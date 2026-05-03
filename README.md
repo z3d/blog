@@ -1,12 +1,12 @@
-# Blog
+# Developer notes
 
-Static GitHub Pages site for notes about development.
+Static GitHub Pages site for developer notes by z3d.
 
 Live site: <https://z3d.github.io/blog/>
 
 ## Posts
 
-- [Consistency checks](site/consistency-checks/)
+- [Measuring consistency in agent-generated code](site/consistency-checks/)
 
 ## Development
 

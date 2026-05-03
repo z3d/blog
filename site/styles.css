@@ -238,7 +238,7 @@ a:hover {
 }
 
 .hero-copy h1 {
-  max-width: 7ch;
+  max-width: 8ch;
   font-size: clamp(4rem, 12vw, 9.5rem);
   line-height: 0.88;
 }
@@ -310,11 +310,15 @@ a:hover {
 }
 
 .post-card h2 {
-  max-width: 16ch;
+  max-width: 18ch;
   margin: 0;
-  font-size: 3rem;
+  font-size: 2.7rem;
   line-height: 1.04;
   letter-spacing: 0;
+}
+
+.post-card h2 a {
+  text-decoration: none;
 }
 
 .post-card p {
@@ -444,8 +448,8 @@ a:hover {
 }
 
 .article h1 {
-  max-width: 10ch;
-  font-size: clamp(3.2rem, 9vw, 6.5rem);
+  max-width: 12ch;
+  font-size: clamp(2.85rem, 7vw, 5.4rem);
 }
 
 .article h2 {
@@ -456,8 +460,9 @@ a:hover {
 }
 
 .article h3 {
-  margin: 1.6rem 0 0.5rem;
-  font-size: 1.15rem;
+  margin: 1.8rem 0 0.5rem;
+  font-size: 1.22rem;
+  line-height: 1.25;
 }
 
 .article p,
@@ -471,6 +476,21 @@ a:hover {
 .article blockquote,
 .article pre {
   max-width: 68ch;
+}
+
+.byline {
+  margin: 1rem 0 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+  font-weight: 750;
+}
+
+.source-note {
+  margin-top: 2.5rem;
+  padding-top: 1.4rem;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.96rem;
 }
 
 .article blockquote {
