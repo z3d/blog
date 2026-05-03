@@ -16,7 +16,9 @@ The report is advisory. It should not say "fail the build because this handler s
 
 Convention tests come after that review. When an advisory finding turns into a rule the team can state clearly, it should leave the consistency report and become a deterministic test.
 
-Agent-generated code makes this useful because the problem can accumulate quietly. The code compiles, the unit tests pass, and the handler answers the right request. After enough of those changes, though, the codebase can start to feel less like one system and more like a folder of plausible one-offs.
+Agent-generated code makes this useful because the problem can accumulate quietly. The code compiles, the unit tests pass, and the handler answers the right request. After enough of those changes, though, the codebase could start to feel less like one system and more like a folder of plausible one-offs.
+
+A fair objection is that generated code may never be perfectly consistent. I agree with that. Perfect sameness is not the goal. The goal is that a human can come back later, without the original prompt or the same model, and still understand how the codebase wants to be changed. The tools are unlikely to vanish, but the code should still be maintainable by the people responsible for it.
 
 A single handler might only be a little odd: one extra dependency, inline DTO construction, a cache invalidation path no sibling uses. A query might introduce a SQL JOIN in a slice where the surrounding queries are deliberately simple. An EF configuration can tuck a class inside another file even though every other configuration has its own file. None of this is automatically wrong. The point is to make it visible while review still has context.
 
