@@ -24,13 +24,13 @@ A single handler might only be a little odd: one extra dependency, inline DTO co
 
 Correctness, convention compliance, style, and consistency tend to get blurred together, but they want different tools.
 
-If every command has to have a validator, that belongs in a deterministic convention test. If query handlers are not allowed to use EF Core, or command handlers are not allowed to use Dapper, encode that and let CI be boring. A formatter can settle whitespace. An analyzer can catch a narrow syntax rule. None of those tools tells you when a file has all the right ingredients but an unfamiliar shape.
+The concrete examples here come from a .NET codebase. If every command has to have a validator, that belongs in a deterministic convention test. If query handlers are not allowed to use EF Core, or command handlers are not allowed to use Dapper, encode that and let CI be boring. A formatter can settle whitespace. An analyzer can catch a narrow syntax rule. None of those tools tells you when a file has all the right ingredients but an unfamiliar shape.
 
 In this work, consistency means idiom: proportions, dependency count, decomposition, cache behavior, private helpers, entity loads, and rare combinations of features. A file can satisfy every convention and still be the one where a reviewer should slow down and ask why it does not resemble its peers.
 
 ## Where convention tests fit
 
-Convention tests are for decisions the team has already made. If every command handler must have a validator, that should be a convention test. If query handlers must not use EF Core, or command handlers must not use Dapper, encode the rule directly and let CI catch it every time.
+Convention tests are for decisions the team has already made. In the .NET reference codebase, that means rules like: every command handler must have a validator, query handlers must not use EF Core, and command handlers must not use Dapper. Encode those rules directly and let CI catch them every time.
 
 Consistency checks are for questions the team has not fully named yet. A report might show that a handler is far from the exemplars because it constructs DTOs inline instead of using the mapper. The first time that appears, it is a review question. It might be harmless local complexity, or it might be a real convention hiding in plain sight.
 

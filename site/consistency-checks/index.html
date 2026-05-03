@@ -85,7 +85,7 @@
       </p>
 
       <p>
-        If every command has to have a validator, that belongs in a deterministic convention test. If query handlers are not allowed to use EF Core, or command handlers are not allowed to use Dapper, encode that and let CI be boring. A formatter can settle whitespace. An analyzer can catch a narrow syntax rule. None of those tools tells you when a file has all the right ingredients but an unfamiliar shape.
+        The concrete examples here come from a .NET codebase. If every command has to have a validator, that belongs in a deterministic convention test. If query handlers are not allowed to use EF Core, or command handlers are not allowed to use Dapper, encode that and let CI be boring. A formatter can settle whitespace. An analyzer can catch a narrow syntax rule. None of those tools tells you when a file has all the right ingredients but an unfamiliar shape.
       </p>
 
       <p>
@@ -95,7 +95,7 @@
       <h2>Where convention tests fit</h2>
 
       <p>
-        Convention tests are for decisions the team has already made. If every command handler must have a validator, that should be a convention test. If query handlers must not use EF Core, or command handlers must not use Dapper, encode the rule directly and let CI catch it every time.
+        Convention tests are for decisions the team has already made. In the .NET reference codebase, that means rules like: every command handler must have a validator, query handlers must not use EF Core, and command handlers must not use Dapper. Encode those rules directly and let CI catch them every time.
       </p>
 
       <p>
