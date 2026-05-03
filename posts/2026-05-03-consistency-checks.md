@@ -10,7 +10,7 @@ Part of it was the significant amount of effort that went into developer experie
 
 That consistency is what I wanted to measure once agents started writing more of the code.
 
-I should be clear about how this came together. I am years away from my CS degree and the university statistics courses where I last had to think seriously about this kind of thing. My starting point was vague: some kind of eigenvector characterisation of code shape. I let Claude Code and Codex guide the translation from that hunch into something I could actually try against a codebase.
+I should be clear about how this came together. The consistency problem was mine: I wanted a way to notice when generated code stopped resembling the code around it. I am years away from my CS degree and the university statistics courses where I last had to think seriously about this kind of thing. The vague measurement idea was some kind of eigenvector characterisation of code shape. I let Claude Code and Codex guide the translation from that hunch into something I could actually try against a codebase.
 
 The check I am describing is fairly small. Pick a cohort of files that solve the same kind of problem. Pin a few examples that show the intended shape. Extract a feature vector from every file in the cohort, normalise those features, then report which files have moved away from the examples and which features caused the movement.
 
@@ -94,7 +94,7 @@ That is the rule I would keep: normalise before calculating distance, and always
 
 ## What the scoring layers showed
 
-The three comparisons are where Claude Code and Codex most directly shaped the work. I had the shape of the problem, but not a clean statistical design. They suggested trying one structural measure, one compiled-shape measure, and one vocabulary measure, then checking which of those signals actually helped.
+The three comparisons are where Claude Code and Codex most directly shaped the work. I knew what I wanted to measure, but I did not have a clean statistical design. They suggested trying one structural measure, one compiled-shape measure, and one vocabulary measure, then checking which of those signals actually helped.
 
 The implementation used three comparisons, each asking a different question. Structural distance asked whether a file's measurements were unusual for the cohort. Shingle similarity asked whether the compiled shape of the code resembled the exemplars, ignoring most names and operands. Embedding distance asked whether the file used the same source vocabulary as the exemplars.
 
