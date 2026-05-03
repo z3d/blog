@@ -179,7 +179,15 @@
       </p>
 
       <p>
-        Those features do not naturally live on the same scale. IL byte size can be in the hundreds or thousands. A boolean such as "has a logger" is only 0 or 1. If those raw values go straight into one distance calculation, the feature with the biggest numbers gets the loudest voice.
+        Those features do not naturally live on the same scale. IL byte size can be in the hundreds or thousands. Constructor dependency count is usually a small integer. A boolean such as "has a logger" is only 0 or 1. Those are different kinds of measurement, but a distance calculation only sees numbers.
+      </p>
+
+      <p>
+        That means the raw score can rank the wrong thing. A handler that is 600 IL bytes larger than the exemplars may look more unusual than a handler that drops cache invalidation or adds the only try/catch block in the cohort, simply because 600 is bigger than 1. The calculation has not understood that the boolean represents a meaningful structural choice. It has only been handed unscaled inputs.
+      </p>
+
+      <p>
+        So before normalisation, the feature with the biggest numeric range gets the loudest voice. The report can look like it is comparing shape while mostly comparing whichever feature happened to have the largest units.
       </p>
 
       <p>
