@@ -199,11 +199,23 @@
       </p>
 
       <p>
-        Per-feature divergence answered that better. Instead of asking which file is farthest from a centroid, it asks which members differ from the exemplars on each feature. A line like "15 handlers differ from the exemplar on HasCacheInvalidator" is easier to review than a single floating-point distance. It tells you what changed, where to look, and whether the difference is isolated or spreading through the cohort.
+        Per-feature divergence answered that better because it removes the aggregate score from the middle of the conversation. Instead of asking which file is farthest from a centroid, it asks a smaller question for each feature: does this file differ from the exemplar shape on this one thing?
       </p>
 
       <p>
-        Composite distance answers "where should I look first?" Per-feature divergence answers the question that matters once you get there: what is different?
+        For boolean features, the comparison is against the exemplar mode. If the pinned command-handler exemplars all have a cache invalidator and 15 handlers do not, the report can say that directly. For numeric features, the comparison is against the exemplar range: if the exemplars have one or two constructor dependencies and a handler has seven, the report does not need to hide that behind a single score.
+      </p>
+
+      <p>
+        That changes the review conversation. "This handler is an outlier" is only a prompt to investigate. "This handler is unusual because it has seven constructor dependencies, loads four entities, and has the only try/catch in the cohort" is already review material. The reviewer can ask whether those differences reflect real business complexity, drift, or a pattern that deserves to become part of the cohort.
+      </p>
+
+      <p>
+        It also shows whether a difference is local or spreading. One handler without <code>HasCacheInvalidator</code> is probably a local question. Fifteen handlers differing on that feature means the exemplar set may be stale, the convention may have shifted, or a rule needs to be written. Those are different outcomes, and a composite score tends to blur them together.
+      </p>
+
+      <p>
+        Composite distance answers "where should I look first?" Per-feature divergence answers the question that matters once you get there: what is different, and is it isolated or becoming normal?
       </p>
 
       <h2>What the cohorts surfaced</h2>
