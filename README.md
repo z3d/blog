@@ -1,8 +1,8 @@
-# Blogs
+# Blog
 
 Static GitHub Pages site for long-form engineering notes.
 
-Live site: <https://z3d.github.io/blogs/>
+Live site: <https://z3d.github.io/blog/>
 
 ## Posts
 
