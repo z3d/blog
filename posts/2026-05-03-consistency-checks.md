@@ -50,7 +50,7 @@ That distinction matters because copying one exemplar too closely would be wrong
 
 ## Start with a cohort
 
-A consistency check only makes sense inside a cohort, meaning a group of files that solve the same kind of problem. Measuring every class in a repository against every other class would mostly measure nonsense. In the paper, three cohorts were enough to make the idea concrete:
+A consistency check only makes sense inside a cohort, meaning a group of files that solve the same kind of problem. Measuring every class in a repository against every other class would mostly measure nonsense. In the original consistency paper, three cohorts were enough to make the idea concrete:
 
 - 34 command handlers.
 - 20 query handlers.
