@@ -108,19 +108,23 @@ The useful exception was inline DTO construction. The embedding layer flagged ha
 
 That is the relationship I want between the layers. Scores and distance reports are a way to discover candidates for review. Convention tests are where repeatable rules end up.
 
-## Per-feature divergence explained the score
+## Read the score feature by feature
 
-The composite distance score was useful for sorting attention, but it did not explain enough on its own. If a report says a handler is a 6.2, the next question is obvious: why?
+The composite distance score was useful for sorting attention, but it did not explain enough on its own. If a report says a handler is a 6.2, review still has to work out what that number is made of.
 
-Per-feature divergence answered that better because it removes the aggregate score from the middle of the conversation. Instead of asking which file is farthest from a centroid, it asks a smaller question for each feature: does this file differ from the exemplar shape on this one thing?
+Per-feature divergence takes the same fingerprint and turns it sideways. Instead of producing one ranked list of files, it produces a small report for every feature. For each one it asks: what does the exemplar set expect here, which files differ, and by how much?
 
-For boolean features, the comparison is against the exemplar mode. If the pinned command-handler exemplars all have a cache invalidator and 15 handlers do not, the report can say that directly. For numeric features, the comparison is against the exemplar range: if the exemplars have one or two constructor dependencies and a handler has seven, the report does not need to hide that behind a single score.
+Boolean and numeric features need different treatment. For boolean features, the report compares the file with the nearest exemplar shape. That detail matters when a cohort has legitimate sub-shapes. A paginated query should not be marked divergent just because by-id queries are common; it should be compared with the paginated-list exemplar. Once the nearest exemplar is chosen, the report can say plainly that a handler differs on `HasCacheInvalidator`, `HasTryCatch`, or `IsCacheable`.
 
-That changes the review conversation. "This handler is an outlier" is only a prompt to investigate. "This handler is unusual because it has seven constructor dependencies, loads four entities, and has the only try/catch in the cohort" is already review material. The reviewer can ask whether those differences reflect real business complexity, drift, or a pattern that deserves to become part of the cohort.
+For numeric features, the report compares against the exemplar mean and spread. If the exemplars usually have two or three constructor dependencies and a handler has seven, the report does not need to hide that inside a 6.2 score. If every query exemplar has zero JOINs, the first handler with a JOIN should be visible even if the rest of the file looks ordinary.
 
-It also shows whether a difference is local or spreading. One handler without `HasCacheInvalidator` is probably a local question. Fifteen handlers differing on that feature means the exemplar set may be stale, the convention may have shifted, or a rule needs to be written. Those are different outcomes, and a composite score tends to blur them together.
+The useful output is not "handler A is far away." It is closer to: `ConstructorDependencyCount` expected roughly 2 or 3 and found 7; `EntityLoadCount` expected 1 and found 4; `HasTryCatch` expected false and found true. That is the level where a reviewer can do something with the result.
 
-Composite distance answers "where should I look first?" Per-feature divergence answers the question that matters once you get there: what is different, and is it isolated or becoming normal?
+That changes the review conversation. "This handler is an outlier" is only a prompt to investigate. "This handler is unusual because it has seven constructor dependencies, loads four entities, and has the only try/catch shape in the cohort" is already review material. The reviewer can ask whether those differences reflect real business complexity, drift, or a pattern that deserves to become part of the cohort.
+
+It also separates local oddness from spreading drift. One handler without cache invalidation is probably a local question. Fifteen handlers differing on the same feature means something bigger has moved: the exemplar set may be stale, the convention may have shifted, or a rule needs to be written. Those are different outcomes, and a composite score tends to blur them together.
+
+Composite distance answers "where should I look first?" Per-feature divergence answers the question that matters once you get there: what changed, who changed with it, and is it becoming normal?
 
 ## What the cohorts surfaced
 
