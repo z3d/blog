@@ -151,19 +151,23 @@
       <h2>Normalize before believing the number</h2>
 
       <p>
-        The structural layer extracts a small feature vector for every member of the cohort. For handlers, useful features included IL byte size, constructor dependency count, logger presence, cache invalidation, try/catch presence, private method count, and entity load count.
+        The structural layer extracts a small feature vector for every member of the cohort. For handlers, that meant things like IL byte size, constructor dependency count, logger presence, cache invalidation, try/catch usage, private method count, and entity load count.
       </p>
 
       <p>
-        The first implementation mistake was obvious in hindsight. I put raw features into the same distance calculation even though their scales were completely different. <code>IlByteSize</code> had values in the hundreds or thousands; booleans like <code>HasLogger</code> were just 0 or 1. Size won, then pretended to be a multi-feature consistency score.
+        The first mistake was putting those raw values into one distance calculation. Some features were counts in the hundreds or thousands. Others were booleans, just 0 or 1. The largest-scale feature dominated the score, even when it was not the most interesting thing about the file.
       </p>
 
       <p>
-        On the command-handler cohort, unnormalized <code>IlByteSize</code> accounted for 98.5% of the distance contribution and was the top contributor for every handler. After z-scoring features against the cohort, the signal changed. The top contributors spread across entity loads, IL byte size, try/catch, and dependency count. The outliers became files with unusual combinations of features, not merely files with more code.
+        In the command-handler cohort, unnormalized <code>IlByteSize</code> accounted for 98.5% of the distance contribution and was the top contributor for every handler. That was not a consistency report. It was a size report with extra steps.
       </p>
 
       <p>
-        The lesson is simple, but easy to miss when the report looks official: a weak feature will dominate if its scale is allowed to dominate. Calling a feature a crude proxy does not make it harmless. Normalize it, name it honestly, and show which feature actually drove the score.
+        After normalizing each feature against the cohort, the report changed. Entity loads, IL byte size, try/catch usage, and dependency count all started showing up as contributors. The outliers were no longer just files with more code. They were files with unusual combinations of features.
+      </p>
+
+      <p>
+        That is the rule I would keep: normalize before calculating distance, and always show which features drove the score. Otherwise the number can look objective while mostly measuring the wrong thing.
       </p>
 
       <h2>What the scoring layers showed</h2>
