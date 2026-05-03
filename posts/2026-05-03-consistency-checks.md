@@ -70,7 +70,7 @@ On the command-handler cohort, unnormalized `IlByteSize` accounted for 98.5% of 
 
 The lesson is simple, but easy to miss when the report looks official: a weak feature will dominate if its scale is allowed to dominate. Calling a feature a crude proxy does not make it harmless. Normalize it, name it honestly, and show which feature actually drove the score.
 
-## Three signals, one did most of the work
+## What the scoring layers showed
 
 The framework tried three scoring layers: structural distance, AST/IL shingle similarity, and embedding distance. I expected the layers to disagree in useful ways. The case study was less dramatic than that.
 
@@ -80,9 +80,9 @@ Embeddings were still useful once: they overlapped with handlers that were const
 
 That relationship feels right to me. Consistency scores are a staging ground. When the same advisory signal keeps pointing at a rule you can state absolutely, move it out of the advisory system and into a convention test.
 
-## The report I kept reading
+## Per-feature divergence explained the score
 
-The composite distance score was useful for sorting attention, but the report I kept coming back to was per-feature divergence.
+The composite distance score was useful for sorting attention, but per-feature divergence did more of the explanatory work.
 
 Instead of asking which file is farthest from a centroid, the divergence report asks which members differ from the exemplars on each feature. A line like "15 handlers differ from the exemplar on HasCacheInvalidator" is easier to review than a single floating-point distance. It tells you what changed, where to look, and whether the difference is isolated or spreading through the cohort.
 
