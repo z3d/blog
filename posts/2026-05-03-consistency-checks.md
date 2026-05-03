@@ -42,7 +42,7 @@ Consistency checks are for questions the team has not fully named yet. A report 
 
 Once review decides "we should never do that, except for this one result-summary case", the finding should graduate into a convention test. From then on, the consistency report no longer has to rediscover it. CI can catch the rule cheaply, and the consistency check can keep looking for softer drift.
 
-That split matters because consistency scores are not policy. Scores point attention at unusual code. Convention tests protect settled agreements. Patterns can still evolve, but they evolve by updating exemplars and conventions deliberately, not by letting every new outlier redefine normal.
+This is why I want to keep the two tools separate. A consistency score is a way to notice code that deserves a closer look, not a policy decision by itself. The convention tests are where the team records agreements it is ready to enforce. Patterns can still evolve, but they should evolve by updating exemplars and conventions deliberately, not by letting every new outlier redefine normal.
 
 ## Prior art
 
