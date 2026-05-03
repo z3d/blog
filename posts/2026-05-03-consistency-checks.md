@@ -38,6 +38,16 @@ Once review decides "we should never do that, except for this one result-summary
 
 That split matters because consistency scores are not policy. Scores point attention at unusual code. Convention tests protect settled agreements. Patterns can still evolve, but they evolve by updating exemplars and conventions deliberately, not by letting every new outlier redefine normal.
 
+## Prior art
+
+None of this starts from empty air. Style guides, formatters, and analyzers already make small choices disappear. Architecture-test tools such as [ArchUnit](https://www.archunit.org/userguide/html/000_Index.html) and [NetArchTest](https://github.com/BenMorris/NetArchTest) let teams encode structural rules in tests. Evolutionary architecture uses [fitness functions](https://www.thoughtworks.com/en-us/insights/books/building-evolutionaryarchitectures-second-edition) as automated feedback on architectural characteristics. [Approval and snapshot testing](https://approvaltestscpp.readthedocs.io/en/latest/generated_docs/ApprovalTestingConcept.html) compare current output with a known-good artifact.
+
+This work sits near those ideas, but it is trying to fill a different gap. It is not a formatter, because the thing being measured is not whitespace or naming. It is not an architecture test, because it does not start with a rule. It is not a snapshot test, because the goal is not exact reproduction. It is not a replacement for review, because the output is a reason to look closer, not a verdict.
+
+It also differs from the common exemplar style in LLM workflows, where examples are used as instructions to the generator: here are three files, now write the next one like this. That can be useful, but it is generation guidance. The exemplars in this framework are a measuring instrument. They anchor the reference distribution for a cohort so review can see which files are structurally far away and which features made them far away.
+
+That distinction matters because copying one exemplar too closely would be wrong. The query-handler cohort has multiple legitimate shapes: by-id single-row, unpaginated list, and paginated list. A single "make it like this" example would flatten that variation. A pinned exemplar set can preserve the allowed variation while still making drift visible.
+
 ## Start with a cohort
 
 A consistency check only makes sense inside a cohort, meaning a group of files that solve the same kind of problem. Measuring every class in a repository against every other class would mostly measure nonsense. In the paper, three cohorts were enough to make the idea concrete:
