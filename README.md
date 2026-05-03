@@ -1,12 +1,12 @@
 # Blog
 
-Static GitHub Pages site for long-form engineering notes.
+Static GitHub Pages site for notes and occasional writeups.
 
 Live site: <https://z3d.github.io/blog/>
 
 ## Posts
 
-- [Consistency Tests: Architecture Drift Detection for AI-Maintained Codebases](site/blog/consistency-tests-architecture-drift-ai-maintained-codebases/)
+- [Consistency checks](site/blog/consistency-checks/)
 
 ## Development
 
