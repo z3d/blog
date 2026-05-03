@@ -6,9 +6,9 @@ Author: z3d
 
 One of the things I noticed when I worked with good developers was how consistent their code was. You could move from one project to another, or from one client to another, and become productive almost immediately.
 
-Part of that came from the effort people put into making code consistent. The trepidation of reviewing a complex pull request dropped a lot when everyone wrote code in the same way. You were still responsible for understanding the behavior, but you were not also decoding a new personal style every time you opened a handler, query, or configuration class.
+Part of it was the significant amount of effort that went into developer experience, but equally important was the consistency that permeated all the repositories. Patterns still evolved, but they evolved in a controlled and deliberate way.
 
-That memory is why I care about measuring consistency. Agent-generated code makes the same problem easier to accumulate: the code compiles, the unit tests pass, and the handler answers the right request. After enough of those changes, though, the codebase can start to feel less like one system and more like a folder of plausible one-offs.
+That consistency is what I wanted to measure once agents started writing more of the code. Agent-generated code makes the same problem easier to accumulate: the code compiles, the unit tests pass, and the handler answers the right request. After enough of those changes, though, the codebase can start to feel less like one system and more like a folder of plausible one-offs.
 
 A single handler might only be a little odd: one extra dependency, inline DTO construction, a cache invalidation path no sibling uses. A query might introduce a SQL JOIN in a slice where the surrounding queries are deliberately simple. An EF configuration can tuck a class inside another file even though every other configuration has its own file. None of this is automatically wrong, so I do not want a build failure. I do want the reviewer to notice it.
 
