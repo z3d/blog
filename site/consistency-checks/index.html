@@ -183,7 +183,7 @@
       </p>
 
       <p>
-        The structural score is the measurement-row comparison. It normalises the features, builds the exemplar centroid, regularises the covariance calculation, then sorts members by distance from the exemplar shape. The shingle score ignores names and most operands and compares short runs of IL opcodes, so it is a second opinion on compiled control-flow shape. The source-token score is local and deterministic in this implementation: it hashes method names, string literals, type references, constructor references, and fields found while walking IL metadata, then compares those token vectors with cosine similarity. It is not asking a model to judge the code.
+        The structural score is the measurement-row comparison. It normalises the features, builds the exemplar centroid, regularises the covariance calculation, then sorts members by distance from the exemplar shape. The shingle score ignores names and most operands and compares short runs of IL opcodes, so it is a second opinion on compiled control-flow shape. The source-token score is local and deterministic in this implementation: it hashes method names, string literals, type references, constructed type names, field names, and metadata-token names found while walking IL metadata, then compares those token vectors with cosine similarity. It is not asking a model to judge the code.
       </p>
 
       <p>
@@ -247,7 +247,7 @@
       </p>
 
       <p>
-        The structural measure handled the fingerprint rows. The shingle measure compared compiled control-flow skeletons by looking at short runs of IL opcodes while ignoring most names and operands. The vocabulary measure compared source-token vectors with cosine similarity. I called this embedding distance in early notes, but in the implementation it is local and deterministic: method names, strings, type references, constructor references, and fields. No model is asked to judge the file.
+        The structural measure handled the fingerprint rows. The shingle measure compared compiled control-flow skeletons by looking at short runs of IL opcodes while ignoring most names and operands. The vocabulary measure compared source-token vectors with cosine similarity. I called this embedding distance in early notes, but in the implementation it is local and deterministic: method names, string literals, type names reached through calls, casts, and object construction, field names, and metadata-token names. No model is asked to judge the file.
       </p>
 
       <p>
