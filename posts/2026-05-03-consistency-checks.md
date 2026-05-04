@@ -214,4 +214,16 @@ The workflow I trust now is:
 
 I am not trying to make every file look the same. I am trying to catch surprise while there is still time to decide whether it belongs.
 
+## What the longer paper is harsher about
+
+The linked consistency paper is not just background reading. It is more empirical, and less charitable to the first version of the idea, because it compares the hunch with the implementation in the repo.
+
+The numbers matter because they show why the conclusion changed. Before normalisation, `IlByteSize` accounted for 98.5% of the command-handler distance contribution and was the top contributor for 34 out of 34 handlers. After normalisation, the top contributors spread across `EntityLoadCount`, `IlByteSize`, `HasTryCatch`, and `ConstructorDependencyCount`. That is the evidence behind the simpler claim above that normalisation changed the report from a size sort into a shape report.
+
+The paper is also harder on the secondary layers than this post was at first. Shingles correlated strongly with structural distance after normalisation, with Spearman 0.748 in the command-handler cohort, so they were mostly confirmation rather than independent evidence. Vocabulary similarity was less correlated, but a lot of that independence was vocabulary artefact: `Create*` handlers in particular domains looked different because of domain words, not because their design had necessarily drifted.
+
+The useful vocabulary result was accidental but real: it helped surface inline DTO construction, which then became a convention test. That does not make vocabulary similarity a scoring authority; it makes it a way to find hunches that still need to be checked by review.
+
+The bigger correction is the per-feature report. In the repo paper, that report is not an add-on to the distance score. It is probably the more useful review surface, because it answers the human question directly: which files differ, and on which feature? If I were rebuilding this from scratch, I would start with structural fingerprints and per-feature divergence, then add shingles only if they were cheap. I would leave vocabulary similarity as exploratory until it found repeatable patterns worth promoting.
+
 Adapted from [z3d's consistency paper](https://github.com/z3d/z3d-consistency/blob/main/docs/papers/consistency-in-agent-generated-code.md) and the extracted [Z3D.Consistency](https://github.com/z3d/z3d-consistency) library.
