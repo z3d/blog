@@ -255,19 +255,19 @@
       </p>
 
       <p>
-        The structural layer is where Mahalanobis distance came in. After normalisation, each file becomes a point in feature space, and the exemplars define a centre. Plain distance asks how far a point is from that centre. Mahalanobis also asks how the features usually move together in the exemplars. If larger handlers normally have more private helpers, that combination is less surprising than a normal-sized handler with an unusual dependency count, a try/catch, and extra entity loads.
+        The structural layer is where Mahalanobis distance came in, but I should not write that as if I arrived there fully formed. My starting point was the hunch that a file should be described by a set of measurements, and that the combinations of those measurements mattered. The models pointed me towards Mahalanobis distance as one way to express that: not just "how far from the examples is this file", but "is this combination of measurements surprising compared with the examples?"
       </p>
 
       <p>
-        The awkward part is covariance. Mahalanobis needs a covariance matrix to describe how features move together, and the raw exemplar matrix is often unusable here. Three exemplars and seven command-handler features means fewer examples than dimensions, so the sample covariance cannot be inverted safely. Even with cohorts of 20, 26, or 34 members, the score is not a statistical proof. The cohort is small and curated.
+        That was useful, but it also exposed the limit of what I could honestly claim. With three exemplars and seven command-handler features, I cannot pretend the relationships between features are known with confidence. Even with cohorts of 20, 26, or 34 members, this is a review signal, not a statistical proof.
       </p>
 
       <p>
-        The implementation regularises the covariance with Ledoit-Wolf shrinkage. In plainer terms, it blends the covariance estimated from the exemplars with a scaled identity matrix. The code computes a shrinkage weight, <code>alpha</code>, and uses <code>Sigma_reg = (1 - alpha) * S + alpha * F</code>, where <code>S</code> is the sample covariance and <code>F</code> is the scaled identity target. When <code>alpha</code> is near 1, the scorer does not trust the exemplar correlations much and behaves more like standardised Euclidean distance over z-scored features. When the exemplar evidence supports correlations, <code>alpha</code> moves towards 0 and the correlations carry more of the score.
+        The implementation uses Ledoit-Wolf shrinkage as a guardrail. In practical terms, when the exemplar set is too small to trust the feature relationships, the score is pulled back towards a simpler standardised distance. When there is more evidence for those relationships, they influence the score more. I needed the models to help me get to that design, and then the reports made it clear whether the result was useful.
       </p>
 
       <p>
-        This is the concrete fallback: it keeps the distance finite and conservative when the exemplar set is small. It does not make the number a gate, and it does not remove the need for the per-feature report.
+        That guardrail keeps the distance finite and conservative when the exemplar set is small. It does not make the number a gate, and it does not remove the need for the per-feature report.
       </p>
 
       <p>
