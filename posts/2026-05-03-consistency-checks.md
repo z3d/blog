@@ -138,7 +138,7 @@ The shingle layer took a different approach by ignoring names and most operands,
 
 The vocabulary layer is the part I trust least. It can flag a handler because it uses domain words the exemplars do not use, even when its shape is normal. Its useful exception was inline DTO construction: it flagged handlers that built DTOs directly instead of using the matching mapper. It probably found them for vocabulary reasons, not because it understood the design problem. Once the pattern was visible, the right move was to turn it into a convention test.
 
-That is the honest relationship between the layers. Structural distance and per-feature divergence are the main pieces. Shingles can provide a second opinion. Vocabulary similarity is a source of hunches, not a scoring authority.
+The relationship between the layers is less tidy than my first version assumed. Structural distance and per-feature divergence now carry most of the report; shingles are useful when they confirm or complicate that picture, and vocabulary similarity is best treated as a hunch that needs review before it becomes anything stronger.
 
 ## Explain the score by feature
 
