@@ -50,7 +50,7 @@ This is why I want to keep the two tools separate. A consistency score is a way 
 
 None of this starts from thin air. Style guides, formatters, and analysers already make small choices disappear. Architecture-test tools such as [ArchUnit](https://www.archunit.org/userguide/html/000_Index.html) and [NetArchTest](https://github.com/BenMorris/NetArchTest) let teams encode structural rules in tests. Evolutionary architecture uses [fitness functions](https://www.thoughtworks.com/en-us/insights/books/building-evolutionaryarchitectures-second-edition) as automated feedback on architectural characteristics. [Approval and snapshot testing](https://approvaltestscpp.readthedocs.io/en/latest/generated_docs/ApprovalTestingConcept.html) compare current output with a known-good artefact.
 
-This work sits near those ideas, but it is trying to fill a different gap. The thing being measured is not whitespace or naming, so it is not a formatter. It also does not start with a rule, which separates it from architecture tests, and it is not looking for exact reproduction in the way a snapshot test does. I still want review in the loop, because the output is a reason to look closer, not a verdict.
+This work sits near those ideas, but it is trying to fill a different gap. The thing being measured is not whitespace or naming, so it is not a formatter. It also does not start with a rule, which separates it from architecture tests, and it is not looking for exact reproduction in the way a snapshot test does. I still want a reviewer to decide, because the output is a reason to look closer, not a verdict.
 
 It also differs from the common exemplar style in LLM workflows, where examples are used as instructions to the generator: here are three files, now write the next one like this. That can be useful as generation guidance, but the exemplars here have a different job: they become the measuring instrument. They anchor the reference distribution for a cohort so review can see which files are structurally far away and which features made them far away.
 
@@ -228,4 +228,4 @@ The bigger correction is the per-feature report. In the repo paper, that report 
 
 Adapted from [z3d's consistency paper](https://github.com/z3d/z3d-consistency/blob/main/docs/papers/consistency-in-agent-generated-code.md) and the extracted [Z3D.Consistency](https://github.com/z3d/z3d-consistency) library.
 
-*Disclosure: this post was written with Claude Code and Codex in the loop. The consistency concern was mine; the statistical framing and some implementation choices were guided by the models, then checked against the source code and the longer paper.*
+*Disclosure: I wrote this with help from Claude Code and Codex. The consistency concern was mine; the statistical framing and some implementation choices were guided by the models, then checked against the source code and the longer paper.*
