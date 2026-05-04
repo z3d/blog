@@ -118,13 +118,13 @@ That is the rule I now trust: normalise before calculating distance, and always 
 
 ## What the scoring layers showed
 
-The three comparisons are where Claude Code and Codex most directly shaped the work. I knew what I wanted to measure, but I did not have a clean statistical design. They suggested trying a structural measure, a compiled-shape measure, and a vocabulary measure. I tried all three, then looked at which ones earned their keep.
+The three comparisons are where Claude Code and Codex most directly shaped the work. I knew the kind of drift I wanted to notice, but I did not have a clean statistical design. They suggested trying a structural measure, a compiled-shape measure, and a vocabulary measure. I tried all three, then looked at which ones earned their keep.
 
 The structural measure handled the fingerprint rows. The shingle measure compared compiled control-flow skeletons by looking at short runs of IL opcodes while ignoring most names and operands. The vocabulary measure compared source-token vectors with cosine similarity. I called this embedding distance in early notes, but in the implementation it is local and deterministic: method names, string literals, type names reached through calls, casts, and object construction, field names, and metadata-token names. No model is asked to judge the file.
 
 I expected three mostly independent signals, but the results did not separate that cleanly. Structural distance did most of the useful ranking, shingles were a correlated second opinion, and the vocabulary layer was mostly noisy. That was still valuable, because it showed which parts of the idea were carrying weight and which parts were only attractive on paper.
 
-The structural layer is where Mahalanobis distance came in, but I should not write that as if I arrived there fully formed. My starting point was the hunch that a file should be described by a set of measurements, and that the combinations of those measurements mattered. The models pointed me towards Mahalanobis distance as one way to express that: not just "how far from the examples is this file", but "is this combination of measurements surprising compared with the examples?"
+The structural layer is where Mahalanobis distance came in, but I should not write that as if I arrived there fully formed. My starting point was looser: the codebase should have a measurable shape, and the report should notice when a file no longer shared that shape. The models pointed me towards Mahalanobis distance as one way to express that: not just "how far from the examples is this file", but "is this combination of measurements surprising compared with the examples?"
 
 That was useful, but it also exposed the limit of what I could honestly claim. With three exemplars and seven command-handler features, I cannot pretend the relationships between features are known with confidence. Even with cohorts of 20, 26, or 34 members, this is a review signal, not a statistical proof.
 
@@ -227,3 +227,5 @@ The useful vocabulary result was accidental but real: it helped surface inline D
 The bigger correction is the per-feature report. In the repo paper, that report is not an add-on to the distance score. It is probably the more useful review surface, because it answers the human question directly: which files differ, and on which feature? If I were rebuilding this from scratch, I would start with structural fingerprints and per-feature divergence, then add shingles only if they were cheap. I would leave vocabulary similarity as exploratory until it found repeatable patterns worth promoting.
 
 Adapted from [z3d's consistency paper](https://github.com/z3d/z3d-consistency/blob/main/docs/papers/consistency-in-agent-generated-code.md) and the extracted [Z3D.Consistency](https://github.com/z3d/z3d-consistency) library.
+
+*Disclosure: this post was written with Claude Code and Codex in the loop. The consistency concern was mine; the statistical framing and some implementation choices were guided by the models, then checked against the source code and the longer paper.*

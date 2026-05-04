@@ -243,7 +243,7 @@
       <h2>What the scoring layers showed</h2>
 
       <p>
-        The three comparisons are where Claude Code and Codex most directly shaped the work. I knew what I wanted to measure, but I did not have a clean statistical design. They suggested trying a structural measure, a compiled-shape measure, and a vocabulary measure. I tried all three, then looked at which ones earned their keep.
+        The three comparisons are where Claude Code and Codex most directly shaped the work. I knew the kind of drift I wanted to notice, but I did not have a clean statistical design. They suggested trying a structural measure, a compiled-shape measure, and a vocabulary measure. I tried all three, then looked at which ones earned their keep.
       </p>
 
       <p>
@@ -255,7 +255,7 @@
       </p>
 
       <p>
-        The structural layer is where Mahalanobis distance came in, but I should not write that as if I arrived there fully formed. My starting point was the hunch that a file should be described by a set of measurements, and that the combinations of those measurements mattered. The models pointed me towards Mahalanobis distance as one way to express that: not just "how far from the examples is this file", but "is this combination of measurements surprising compared with the examples?"
+        The structural layer is where Mahalanobis distance came in, but I should not write that as if I arrived there fully formed. My starting point was looser: the codebase should have a measurable shape, and the report should notice when a file no longer shared that shape. The models pointed me towards Mahalanobis distance as one way to express that: not just "how far from the examples is this file", but "is this combination of measurements surprising compared with the examples?"
       </p>
 
       <p>
@@ -437,6 +437,8 @@
       <p class="source-note">
         Adapted from <a href="https://github.com/z3d/z3d-consistency/blob/main/docs/papers/consistency-in-agent-generated-code.md">z3d&apos;s consistency paper</a> and the extracted <a href="https://github.com/z3d/z3d-consistency"><code>Z3D.Consistency</code></a> library.
       </p>
+
+      <p class="source-note"><em>Disclosure: this post was written with Claude Code and Codex in the loop. The consistency concern was mine; the statistical framing and some implementation choices were guided by the models, then checked against the source code and the longer paper.</em></p>
     </article>
   </main>
 
