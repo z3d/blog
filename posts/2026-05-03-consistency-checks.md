@@ -44,7 +44,7 @@ In the reference app, the report runs as part of the test project. `dotnet test`
 
 For command handlers, the fingerprint includes IL byte size, constructor dependency count, logger presence, cache invalidator dependency, try/catch usage, private method count, and entity-load calls. Query handlers get a different row because they have different concerns: pagination, cache opt-in, list return shape, SQL statement count, and `JOIN` or `APPLY` usage. EF configurations use fluent API call counts, because that is where their shape lives.
 
-The structural view is the part I trust most. It normalises the features, compares each member with the exemplar shape, and sorts the files that look furthest away. The implementation uses a regularised multivariate distance internally, but the useful idea is simpler than the math sounds: put the features on comparable scales, compare like with like, and show the reviewer which features drove the result.
+The structural view is the part I trust most. It normalises the features, compares each member with the exemplar shape, and sorts the files that look furthest away. The implementation uses a regularised multivariate distance internally, but the useful idea is simpler than the maths sounds: put the features on comparable scales, compare like with like, and show the reviewer which features drove the result.
 
 I also tried two secondary views. One compares three-opcode IL shingles after dropping operands, giving a rough signal for compiled control-flow shape. The other compares local source and metadata vocabulary with cosine similarity. Neither of these asks a model to judge the code. They are deterministic signals, and in practice they mostly taught me how much weight not to put on them.
 
