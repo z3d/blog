@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Measuring consistency in agent-generated code - Developer notes</title>
-  <meta name="description" content="What I learned measuring structural drift in agent-generated code with cohorts, exemplars, normalised distance, and advisory reports.">
+  <meta name="description" content="A practical advisory report for noticing structural drift in agent-generated code before vague consistency problems harden into convention.">
   <meta name="author" content="z3d">
   <link rel="canonical" href="https://z3d.github.io/blog/consistency-checks/">
   <link rel="stylesheet" href="../styles.css">
@@ -31,352 +31,226 @@
         <h1>Measuring consistency in agent-generated code</h1>
         <p class="byline">By <a href="https://github.com/z3d" rel="author">z3d</a></p>
         <p class="dek">
-          One of the things I noticed when I worked with good developers was how consistent their code was. You could move from one project to another and become productive almost immediately.
+          Agent-generated code has a quiet failure mode. The new handler compiles. The tests pass. The endpoint returns the right data. In isolation, nothing looks obviously wrong.
         </p>
       </header>
 
       <p>
-        Part of it was the significant amount of effort that went into developer experience, but equally important was the consistency that permeated all the repositories. Patterns still evolved, but they evolved in a controlled and deliberate way.
+        The cost shows up later, when someone has to change the system and cannot tell which nearby file represents the intended pattern. One handler loads entities before validation, another validates first. One query uses Dapper, another uses EF Core. One command invalidates a cache, another leaves the cache alone. Every file can be locally defensible while the codebase slowly becomes harder to read.
       </p>
 
       <p>
-        That consistency is what I wanted to measure once agents started writing more of the code.
+        That is the problem I wanted to catch.
       </p>
 
       <p>
-        I should be clear about how this came together. The consistency problem was mine: I wanted a way to notice when generated code stopped resembling the code around it. I am years away from my CS degree and the university statistics courses where I last had to think seriously about this kind of thing. The vague measurement idea was some kind of eigenvector characterisation of code shape. I let Claude Code and Codex guide the translation from that hunch into something I could actually try against a codebase.
+        The tool I ended up with is deliberately modest: an advisory report that says &quot;this file looks unlike its peers, and here are the features that made it stand out.&quot; It does not decide that the file is wrong. It does not fail the build because a handler scored 6.2. It gives a reviewer a short list of places worth opening before the context has gone cold.
       </p>
 
       <p>
-        That hunch became something narrower: an xUnit test suite around a report builder. For the structural part, each file becomes a fingerprint, which is a row of measurements such as IL byte size, constructor dependency count, whether the handler has cache invalidation, whether it uses try/catch, entity load count, and so on.
+        The loop is simple. Pick a family of files that solve the same kind of problem. Pin a few examples that represent the intended shape. Measure each file with a small set of structural features. Compare the rest of the family with those examples. Report the files that differ most, and explain why.
       </p>
 
       <p>
-        The report builder also checks compiled shape and source vocabulary. Underneath that, the loop is fairly plain: choose a cohort of files that solve the same kind of problem, pin a few examples that show the intended shape, compare the rest of the cohort with those examples, and report which files look furthest away and why.
+        In the reference .NET codebase, that meant command handlers, query handlers, and EF Core configurations. The command-handler fingerprint includes things like IL byte size, constructor dependency count, logger presence, cache invalidation, try/catch usage, private method count, and entity-load calls. Query handlers use a different fingerprint because their shape is different: pagination, cache opt-in, list return shape, SQL statement count, and <code>JOIN</code> or <code>APPLY</code> usage. EF configurations are measured through fluent API call counts, because that is where their structure lives.
       </p>
 
       <p>
-        Because it is for review, the report is advisory. It should not say "fail the build because this handler scored 6.2." It should say "this handler is far from the exemplars because it has an unusual dependency count, retry shape, cache behaviour, or entity-load pattern." Review can then decide whether the file is drift, legitimate local complexity, or the first instance of a pattern that should become an exemplar.
+        None of those measurements knows whether the code is good. They only describe shape. That is enough for the job I want the report to do.
+      </p>
+
+      <h2>Consistency means idiom</h2>
+
+      <p>
+        Correctness, convention compliance, style, and consistency are easy to blur together, but they are different problems.
       </p>
 
       <p>
-        Convention tests come after that review. When an advisory finding turns into a rule the team can state clearly, it should leave the consistency report and become a deterministic test.
+        If every command handler must have a validator, that should be a deterministic convention test. If query handlers must not use EF Core, encode that directly. If command handlers must not use Dapper, make CI boring and let it catch every violation. Formatters and analysers can handle narrow surface rules.
       </p>
 
       <p>
-        The suite also protects that boundary. It has a meta-test that scans consistency tests for literal distance thresholds such as <code>distance &lt; 5.0</code>. Data-relative assertions for scorer tests can be allow-listed with a reason, but a hard threshold cannot drift into the report quietly.
+        The gap is the file that passes all of those checks and still feels unfamiliar.
       </p>
 
       <p>
-        Agent-generated code makes this useful because the problem can accumulate quietly: the code compiles, the unit tests pass, and the handler answers the right request. The cost shows up later, when someone has to change the system and cannot tell which nearby file represents the intended pattern. Does this kind of handler load entities before validation, should it invalidate a cache, should this query use Dapper or EF Core? If every file answers those questions differently, the next change starts with rediscovery.
+        That is what I mean by consistency here: idiom. The proportions of the file, the number of dependencies, the way work is decomposed, whether cache invalidation appears, how many entities are loaded, whether a rare combination of features appears in a place where the surrounding files do something simpler. A file can satisfy every rule the team has written down and still be the one where review should slow down.
       </p>
 
       <p>
-        A fair objection is that generated code may never be perfectly consistent, and I agree with that. Perfect sameness is not the goal here; the goal is that a human can come back later, without the original prompt or the same model, and still understand how the codebase wants to be changed. The tools are unlikely to vanish, but the code should still be maintainable by the people responsible for it.
+        The report is for questions the team has not fully named yet. Once review turns one of those questions into a clear rule, it should stop being a consistency finding and become a convention test.
       </p>
 
       <p>
-        A single handler might only be a little odd: one extra dependency, inline DTO construction, a cache invalidation path no sibling uses. A query might introduce a SQL JOIN in a slice where the surrounding queries are deliberately simple. An EF configuration can tuck a class inside another file even though every other configuration has its own file. None of this is automatically wrong; the point is to make it visible while review still has context.
+        That promotion step matters. A vague report is a good place to notice a pattern once. It is a bad place to enforce a rule forever.
       </p>
 
-      <h2>What I mean by consistency</h2>
+      <h2>Start with a real cohort</h2>
 
       <p>
-        Correctness, convention compliance, style, and consistency tend to get blurred together, but they want different tools.
-      </p>
-
-      <p>
-        The concrete examples here come from a .NET codebase. If every command has to have a validator, that belongs in a deterministic convention test. If query handlers are not allowed to use EF Core, or command handlers are not allowed to use Dapper, encode that and let CI be boring. A formatter and an analyser can take care of narrow surface rules, but neither tells you when a file has all the right ingredients and still has an unfamiliar shape.
+        A consistency check only makes sense inside a cohort, meaning a group of files that solve the same kind of problem. Measuring every class in a repository against every other class mostly measures noise.
       </p>
 
       <p>
-        In this work, consistency means idiom: proportions, dependency count, decomposition, cache behaviour, private helpers, entity loads, and rare combinations of features. A file can satisfy every convention and still be the one where a reviewer should slow down and ask why it does not resemble its peers.
-      </p>
-
-      <h2>Where convention tests fit</h2>
-
-      <p>
-        Convention tests are for decisions the team has already made. In the .NET reference codebase, that means rules like: every command handler must have a validator, query handlers must not use EF Core, and command handlers must not use Dapper. Encode those rules directly and let CI catch them every time.
+        The reference implementation uses three cohorts: 34 command handlers, 20 query handlers, and 26 EF Core configurations. Those are small numbers, but they are enough for an advisory review signal. They are not enough for grand claims about code in general, and I would not run the same machinery over six files and pretend the score meant much.
       </p>
 
       <p>
-        Consistency checks are for questions the team has not fully named yet. A report might show that a handler is far from the exemplars because it constructs DTOs inline instead of using the mapper. The first time that appears, it is a review question. It might be harmless local complexity, or it might be a real convention hiding in plain sight.
+        The cohort boundary is doing a lot of the work. A command handler changes state. It loads entities, calls domain methods, saves changes, invalidates caches, and returns a DTO. A query handler reads data and should usually be thinner, dependency-light, and shaped around the kind of result it returns. Treating both as just &quot;handlers&quot; would hide the fact that they are meant to have different idioms.
       </p>
 
       <p>
-        Once review decides "we should never do that, except for this one result-summary case", the finding should graduate into a convention test. From then on, the consistency report no longer has to rediscover it. CI can catch the rule cheaply, and the consistency check can keep looking for softer drift.
+        Within a cohort, I pin three to five exemplars. These are the files I would point a new engineer, or a new agent session, at and say: write in this direction.
       </p>
 
       <p>
-        This is why I want to keep the two tools separate. A consistency score is a way to notice code that deserves a closer look, not a policy decision by itself. The convention tests are where the team records agreements it is ready to enforce. Patterns can still evolve, but they should evolve by updating exemplars and conventions deliberately, not by letting every new outlier redefine normal.
-      </p>
-
-      <h2>Prior art</h2>
-
-      <p>
-        None of this starts from thin air. Style guides, formatters, and analysers already make small choices disappear. Architecture-test tools such as <a href="https://www.archunit.org/userguide/html/000_Index.html">ArchUnit</a> and <a href="https://github.com/BenMorris/NetArchTest">NetArchTest</a> let teams encode structural rules in tests. Evolutionary architecture uses <a href="https://www.thoughtworks.com/en-us/insights/books/building-evolutionaryarchitectures-second-edition">fitness functions</a> as automated feedback on architectural characteristics. <a href="https://approvaltestscpp.readthedocs.io/en/latest/generated_docs/ApprovalTestingConcept.html">Approval and snapshot testing</a> compare current output with a known-good artefact.
+        I do not want to compare against the current average of the whole cohort. The current average may already contain the drift I am trying to find. Once drift is baked into the reference point, the next bit of drift starts looking normal.
       </p>
 
       <p>
-        This work sits near those ideas, but it is trying to fill a different gap. The thing being measured is not whitespace or naming, so it is not a formatter. It also does not start with a rule, which separates it from architecture tests, and it is not looking for exact reproduction in the way a snapshot test does. I still want a reviewer to decide, because the output is a reason to look closer, not a verdict.
+        Pinned exemplars are not magic either. They need written justification and review, because they become part of the measuring instrument. They should represent intended shapes, not the longest file, the most defensive file, or whatever happened to land first.
       </p>
 
       <p>
-        It also differs from the common exemplar style in LLM workflows, where examples are used as instructions to the generator: here are three files, now write the next one like this. That can be useful as generation guidance, but the exemplars here have a different job: they become the measuring instrument. They anchor the reference distribution for a cohort so review can see which files are structurally far away and which features made them far away.
+        They also need to preserve legitimate variation. The query-handler cohort has by-id lookups, unpaginated lists, and paginated lists. A single &quot;average query handler&quot; would represent none of those shapes honestly. Pinning one exemplar from each sub-shape gives the report room to say &quot;this file is different&quot; without flattening every valid pattern into one template.
+      </p>
+
+      <h2>What the report does</h2>
+
+      <p>
+        The entry point is ordinary: run the test project. In the reference app, <code>dotnet test</code> discovers <code>ConsistencyReportTests</code> beside the rest of the xUnit suite. Each report test defines a cohort, tells the reporter how to discover its members, tells it how to measure one member, and names the pinned exemplars.
       </p>
 
       <p>
-        That distinction matters because copying one exemplar too closely would be wrong. The query-handler cohort has multiple legitimate shapes: by-id single-row, unpaginated list, and paginated list. A single "make it like this" example would flatten that variation. A pinned exemplar set can preserve the allowed variation while still making drift visible.
-      </p>
-
-      <h2>Start with a cohort</h2>
-
-      <p>
-        A consistency check only makes sense inside a cohort, meaning a group of files that solve the same kind of problem. Measuring every class in a repository against every other class would mostly measure nonsense. In the original consistency paper, three cohorts were enough to make the idea concrete:
-      </p>
-
-      <ul>
-        <li>34 command handlers.</li>
-        <li>20 query handlers.</li>
-        <li>26 EF Core configurations.</li>
-      </ul>
-
-      <p>
-        In this kind of .NET application, a command handler receives a request that changes state. It loads entities, calls domain methods, saves changes, invalidates caches, and returns a DTO. A query handler receives a read request and returns read-model data. It should usually be thinner, dependency-light, and shaped around the kind of result it returns. Treating both as just "handlers" would hide the fact that they are meant to use different approaches.
+        For each member, the reporter builds a fingerprint. After that it produces a few views over the same question.
       </p>
 
       <p>
-        Those are small cohorts, not population studies. They were enough for this work because the report was not trying to prove a universal property of code. It was trying to give review a ranked list of files that looked unusual against a set of chosen examples. I would not run the same machinery over six files and pretend the distance score meant much.
+        The structural view is the useful one. It normalises the features, compares each member with the exemplar shape, and sorts the files that look furthest away. The implementation uses a regularised multivariate distance under the covers, but I do not think that should be the headline. The headline is simpler: put the features on comparable scales, compare like with like, and show the features that drove the result.
       </p>
 
       <p>
-        Those categories were useful because they had enough members, a clear role, and different kinds of legitimate variation. The command handlers were not one identical template. The exemplar set covered a small state transition, an entity creation path with cross-entity validation, and a heavier orchestration path that touched several reads before writing. The query handlers had a cleaner split: by-id lookup, bounded list, and paginated list. The EF configurations ranged from small table mappings to richer aggregate mappings.
+        I also tried two secondary signals. One compares three-opcode IL shingles after dropping operands, which gives a rough view of compiled control-flow shape. The other compares local source and metadata vocabulary with cosine similarity. Neither asks a model to judge the code.
       </p>
 
       <p>
-        That matters because measuring consistency is not the same as forcing every file into one shape. If a cohort has several intended shapes, the exemplar set needs to preserve them. Otherwise the tool will punish ordinary variation and call it drift.
+        Those secondary layers were useful mostly because they taught me what not to lean on. Shingles were a cheap second opinion, but they often moved with the structural score. Vocabulary similarity was noisier; it could flag a handler because the domain words were different, even when the design was normal. Its one useful hit was inline DTO construction, and even there it probably found the pattern for vocabulary reasons rather than because it understood the design problem.
       </p>
 
       <p>
-        The practical rule I landed on is three to five pinned exemplars per cohort. I would not compute against the current average of the whole cohort, because the current average can already contain the drift you are trying to find. Once drift is baked into the reference point, new drift starts looking normal.
-      </p>
-
-      <p>
-        The exemplars are the files you would point a new engineer, or a new agent session, at and say: write like this. They need written justification and review, because they become part of the measuring instrument. They should represent the intended shape of the cohort, not the longest file, the most defensive file, or whatever happened to land first.
-      </p>
-
-      <h2>How it runs</h2>
-
-      <p>
-        The entry point is deliberately ordinary: run the test project. In the reference app, <code>dotnet test</code> loads the normal xUnit suite and discovers <code>ConsistencyReportTests</code> beside the other tests. There are report tests for command handlers, query handlers, and EF Core configurations. Each one creates a cohort and passes it to <code>CohortConsistencyReporter.Build(...)</code>.
-      </p>
-
-      <p>
-        The cohort is the project-specific part. It says which application assembly to inspect, how to find members of this family, how to measure one member, and which type names are pinned exemplars. The command-handler cohort reflects over the API assembly, keeps concrete <code>CommandHandler</code> types that implement the mediator handler interface, and then builds a <code>HandlerFingerprint</code> from constructor parameters and IL inspection.
-      </p>
-
-      <p>
-        That fingerprint is the row of measurements. For command handlers, it includes IL byte size, constructor dependency count, logger presence, cache invalidator dependency, try/catch usage, private method count, and entity-load calls. Query handlers use a different row because their shape is different: pagination, cache opt-in, list return shape, SQL statement count, and <code>JOIN</code> or <code>APPLY</code> usage. EF configurations use fluent API call counts, because that is where their shape lives.
-      </p>
-
-      <p>
-        <code>Build</code> then follows the same path for every cohort. It discovers the member types, extracts all fingerprints, resolves the configured exemplar names back to those fingerprints and types, then refuses to continue if the cohort is empty or an exemplar cannot be resolved. After that it computes the four pieces of the report: structural distance, IL shingle similarity, source-token similarity, and per-feature divergence.
-      </p>
-
-      <p>
-        The structural score is the measurement-row comparison. It normalises the features, builds the exemplar centroid, regularises the covariance calculation, then sorts members by distance from the exemplar shape. The shingle score drops all operands, compares three-opcode IL shingles with Jaccard similarity, and averages that similarity against the exemplars, so it is a second opinion on compiled control-flow shape. The source-token score is local and deterministic in this implementation: it hashes method names, string literals, type references, constructed type names, field names, and metadata-token names found while walking IL metadata, then compares those token vectors with cosine similarity. It is not asking a model to judge the code.
-      </p>
-
-      <p>
-        The report test writes all of that to xUnit output: structural rows with top contributors, shingle similarity rows, token-similarity rows, a per-feature divergence section, and a summary with the exemplar list and simple cohort statistics. The test asserts that the report is well formed: member counts line up, scores are finite, and sorted outputs are actually sorted. It does not assert that a handler&apos;s distance must be below some magic number.
-      </p>
-
-      <p>
-        The tests that are meant to fail are the governance tests around the report. They check that discovery still matches files on disk, fingerprints still have meaningful values, exemplar names in code still match the README, every exemplar still has written justification, and the scorer is anchored to pinned exemplars rather than the whole cohort. A separate advisory meta-test scans the consistency tests so someone cannot quietly add a literal distance threshold and turn the report into a merge gate.
-      </p>
-
-      <p>
-        In plain terms: compile the application, run the tests, reflect over the compiled types, measure each member, compare it with the pinned exemplars, print the report, and fail only when the measurement setup or a deterministic convention is broken. A high score is not a failing condition. It is a review prompt with enough detail for a person to decide what it means.
+        That is fine. A hunch can still be useful if review turns it into something deterministic. But I would not treat vocabulary similarity as an authority.
       </p>
 
       <h2>Normalise before believing the number</h2>
 
       <p>
-        Once the cohort and exemplars are chosen, the next step is to compare each candidate file with the shape the exemplars represent. That comparison starts by turning every file into a small set of measurements. For a handler, those measurements might include IL byte size, constructor dependency count, logger presence, cache invalidation, try/catch usage, private method count, and entity load count.
+        The first version of the structural score had a basic problem: the features did not live on the same scale.
       </p>
 
       <p>
-        The distance score is just a way to combine those measurements into a review signal. It is not trying to decide whether the file is good or bad. It is trying to answer a narrower question: which files look furthest from the pinned exemplar shape?
+        IL byte size can be in the hundreds or thousands. Constructor dependency count is usually a small integer. A boolean such as <code>HasTryCatch</code> is either 0 or 1. A distance calculation only sees numbers, so without normalisation the feature with the biggest numeric range gets the loudest voice.
       </p>
 
       <p>
-        That only works if each measurement gets a fair say.
+        That is exactly what happened. In the command-handler cohort, unnormalised <code>IlByteSize</code> accounted for 98.5% of the distance contribution and was the top contributor for every handler. The report looked mathematical, but it was mostly answering one question: which handler has more IL?
       </p>
 
       <p>
-        Those features do not naturally live on the same scale: IL byte size can be in the hundreds or thousands, constructor dependency count is usually a small integer, and a boolean such as "has a logger" is only 0 or 1. They are different kinds of measurement, but a distance calculation only sees numbers.
+        After normalisation, the contributors spread across <code>EntityLoadCount</code>, <code>IlByteSize</code>, <code>HasTryCatch</code>, and <code>ConstructorDependencyCount</code>. The outliers were no longer just larger files. They were files with unusual combinations of features.
       </p>
 
       <p>
-        That means the raw score can rank the wrong thing. A handler that is 600 IL bytes larger than the exemplars may look more unusual than a handler that drops cache invalidation or adds the only try/catch block in the cohort, simply because 600 is bigger than 1. The calculation has not understood that the boolean represents a meaningful structural choice; it has only been handed unscaled inputs.
+        That result changed how much I trust the score. Normalise first, then show the feature contributors. Without both, a number can look objective while measuring the wrong thing.
       </p>
 
       <p>
-        So before normalisation, the feature with the biggest numeric range gets the loudest voice. The report can look like it is comparing shape while mostly comparing whichever feature happened to have the largest units.
+        The regularised distance calculation is a guardrail, not a source of truth. With three exemplars and seven command-handler features, I cannot pretend the relationships between features are known with confidence. The shrinkage keeps the distance finite and conservative when the exemplar set is small. It does not make the score a gate, and it does not remove the need for the per-feature report.
+      </p>
+
+      <h2>The explanation matters more than the score</h2>
+
+      <p>
+        The composite distance score is only a sort order. It helps decide which files review should open first. It does not explain what is unusual on its own.
       </p>
 
       <p>
-        In the command-handler cohort, this is exactly what happened: unnormalised <code>IlByteSize</code> accounted for 98.5% of the distance contribution and was the top contributor for every handler. The report looked mathematical, but it was mostly answering one question: which handler has more IL?
+        The per-feature report is the part I now care about most. It answers the human question directly: which files differ, and on which feature?
       </p>
 
       <p>
-        Normalisation fixes that by making each feature relative to the cohort before distance is calculated. A count of seven constructor dependencies matters because most handlers have fewer. A try/catch matters because almost no handlers use one. A large IL body still matters, but it no longer drowns out everything else.
+        For boolean features, the report compares a file with the nearest exemplar shape rather than with a global majority. That matters when a cohort has several valid sub-shapes. A paginated query should be compared with the paginated-list exemplar, not with a by-id lookup.
       </p>
 
       <p>
-        After normalising the features, entity loads, IL byte size, try/catch usage, and dependency count all started showing up as contributors. The outliers were no longer just files with more code; they were files with unusual combinations of features.
+        For numeric features, the report compares against the exemplar mean and spread. If the exemplars usually have two or three constructor dependencies and one handler has seven, the report should say that plainly. If every query exemplar has zero joins and one query introduces a <code>JOIN</code>, that should be visible even if the rest of the file looks ordinary.
       </p>
 
       <p>
-        That is the rule I now trust: normalise before calculating distance, and always show which features drove the score. Otherwise the number can look objective while mostly measuring the wrong thing.
-      </p>
-
-      <h2>What the scoring layers showed</h2>
-
-      <p>
-        The three comparisons are where Claude Code and Codex most directly shaped the work. I knew the kind of drift I wanted to notice, but I did not have a clean statistical design. They suggested trying a structural measure, a compiled-shape measure, and a vocabulary measure. I tried all three, then looked at which ones earned their keep.
+        This is the level where review can do something useful:
       </p>
 
       <p>
-        The structural measure handled the fingerprint rows. The shingle measure compared compiled control-flow skeletons by recording only IL opcodes, turning them into three-opcode shingles, and averaging Jaccard similarity against the exemplars. Method names, type names, string values, and branch targets are operands, so they do not enter that score. The vocabulary measure compared source-token vectors with cosine similarity. I called this embedding distance in early notes, but in the implementation it is local and deterministic: method names, string literals, type names reached through calls, casts, and object construction, field names, and metadata-token names. No model is asked to judge the file.
+        <code>ConstructorDependencyCount</code> expected roughly 2 or 3 and found 7. <code>EntityLoadCount</code> expected 1 and found 4. <code>HasTryCatch</code> expected false and found true.
       </p>
 
       <p>
-        I expected three mostly independent signals, but the results did not separate that cleanly. Structural distance did most of the useful ranking, shingles were a correlated second opinion, and the vocabulary layer was mostly noisy. That was still valuable, because it showed which parts of the idea were carrying weight and which parts were only attractive on paper.
+        That is a better conversation than &quot;this file is an outlier.&quot; The reviewer can decide whether those differences are accidental drift, legitimate local complexity, or the first example of a new pattern that should become an exemplar.
       </p>
 
       <p>
-        The structural layer is where Mahalanobis distance came in, but I should not write that as if I arrived there fully formed. My starting point was looser: the codebase should have a measurable shape, and the report should notice when a file no longer shared that shape. The models pointed me towards Mahalanobis distance as one way to express that: not just "how far from the examples is this file", but "is this combination of measurements surprising compared with the examples?"
+        The count of affected files matters too. One handler missing cache invalidation is probably a local question. Fifteen handlers missing it means something broader has moved. Maybe the exemplar set is stale. Maybe the convention has changed. Maybe the team finally has enough evidence to encode a rule. A single score tends to blur those outcomes together.
+      </p>
+
+      <h2>What it surfaced</h2>
+
+      <p>
+        The command-handler cohort had 34 members and seven features. Before normalisation, the largest handlers dominated the report. After normalisation, the strongest outliers were two handlers that wrapped work in <code>SERIALIZABLE</code> transactions with retry and rollback.
       </p>
 
       <p>
-        That was useful, but it also exposed the limit of what I could honestly claim. With three exemplars and seven command-handler features, I cannot pretend the relationships between features are known with confidence. Even with cohorts of 20, 26, or 34 members, this is a review signal, not a statistical proof.
+        Those handlers were carrying real business complexity. They were not obvious mistakes. The report still did its job because it did not say &quot;fail this.&quot; It said &quot;this is structurally unusual, please look at it.&quot;
       </p>
 
       <p>
-        The implementation uses Ledoit-Wolf shrinkage as a guardrail. In practical terms, the code blends the covariance estimated from the exemplars with a scaled identity matrix before inverting it. When the shrinkage weight is high, the score behaves closer to standardised distance over z-scored features; when it is lower, the feature relationships in the exemplars have more influence. I needed the models to help me get to that design, and then the reports made it clear whether the result was useful.
+        The same cohort surfaced a better finding: inline DTO construction. Some handlers were building DTOs directly instead of using the matching mapper. Once the pattern was visible, it stopped being a consistency question and became a convention test. The test now catches DTO construction through IL inspection and skips the one result-summary case where no mapper should exist.
       </p>
 
       <p>
-        That guardrail keeps the distance finite and conservative when the exemplar set is small. It does not make the number a gate, and it does not remove the need for the per-feature report.
+        The query-handler cohort had 20 members and three legitimate shapes: by-id single-row, unpaginated list, and paginated list. Pinning one exemplar from each shape mattered because there was no honest average query handler.
       </p>
 
       <p>
-        Structural distance carried the work once normalisation and shrinkage were in place. It found files with unusual combinations of features: more entity loads than the cohort expected, different dependency counts, retry shapes, private helpers, and try/catch blocks.
+        The only strong outlier was a query using a SQL <code>JOIN</code>. That was a useful advisory result. It was unusual enough to notice and still defensible as local complexity. The score could not decide that for us, but it made the question hard to miss.
       </p>
 
       <p>
-        The shingle layer took a different approach by dropping operands entirely and comparing the remaining opcode patterns with the exemplar opcode patterns. I wanted this to catch the "same feature vector, different control flow" case. It did that sometimes, but it often moved with structural distance. I would keep it as a cheap second opinion, not build it before the structural and per-feature reports.
+        The query cohort also helped move list-query caching from an advisory concern into a hard convention, because list caches could not be reliably invalidated with the available cache abstraction.
       </p>
 
       <p>
-        The vocabulary layer is the part I trust least. It can flag a handler because it uses domain words the exemplars do not use, even when its shape is normal. Its useful exception was inline DTO construction: it flagged handlers that built DTOs directly instead of using the matching mapper. It probably found them for vocabulary reasons, not because it understood the design problem. Once the pattern was visible, the right move was to turn it into a convention test.
+        The EF-configuration cohort had 26 members. On the first run, governance caught a configuration class nested inside another configuration file. Every other configuration had its own file, but the rule had never been named, so the exception had been tolerated. Once surfaced, it was obvious enough to fix and enforce.
       </p>
 
       <p>
-        The relationship between the layers is less tidy than my first version assumed. Structural distance and per-feature divergence now carry most of the report; shingles are useful when they confirm or complicate that picture, and vocabulary similarity is best treated as a hunch that needs review before it becomes anything stronger.
-      </p>
-
-      <h2>Explain the score by feature</h2>
-
-      <p>
-        The composite distance score worked as a sort order. It helped decide which files review should open first, but it could not explain what was unusual about a file on its own. A handler can score highly because it is large, because it has a rare control-flow shape, because it loads more entities than the exemplars, or because several smaller differences line up.
-      </p>
-
-      <p>
-        The per-feature report keeps those reasons visible by using the same fingerprint as the distance score and then reporting each feature separately. Instead of only giving a single ranked list of files, it organises the output by feature name: the exemplar expectation, then the files whose values differ enough to matter.
-      </p>
-
-      <p>
-        By feature, I just mean one measurement in the fingerprint. Some features are yes/no questions. I call those boolean features: does the handler have cache invalidation, does it use try/catch, is the query cacheable? Other features are counts or sizes. I call those numeric features: IL byte size, constructor dependency count, entity load count, JOIN count.
-      </p>
-
-      <p>
-        Those two kinds of feature need different treatment. For boolean features, the report compares the file with the nearest exemplar shape, not with a global majority. That avoids false positives in cohorts with valid sub-shapes. A paginated query should be compared with the paginated-list exemplar, not with a by-id query. After that match, a difference such as <code>HasCacheInvalidator</code>, <code>HasTryCatch</code>, or <code>IsCacheable</code> is easy to read.
-      </p>
-
-      <p>
-        For numeric features, the report compares against the exemplar mean and spread. If the exemplars usually have two or three constructor dependencies and a handler has seven, the report does not need to hide that inside a 6.2 score. If every query exemplar has zero JOINs, the first handler with a JOIN should be visible even if the rest of the file looks ordinary.
-      </p>
-
-      <p>
-        The useful output is not just that one handler is far from the exemplars; it is closer to: <code>ConstructorDependencyCount</code> expected roughly 2 or 3 and found 7; <code>EntityLoadCount</code> expected 1 and found 4; <code>HasTryCatch</code> expected false and found true. That is the level where a reviewer can do something with the result.
-      </p>
-
-      <p>
-        That changes the review conversation. Instead of saying only that a handler is an outlier, the report can say that dependency count is high, entity loads are high, and try/catch is present where the exemplars do not use it. Review can then decide whether those facts are expected complexity, accidental drift, or a pattern that should become a convention.
-      </p>
-
-      <p>
-        The count of affected files matters too, because one handler missing cache invalidation is probably a local question, while fifteen handlers missing it suggests something broader has moved. The exemplar set may be stale, the convention may have shifted, or the rule may need to be encoded directly. Those are different outcomes, and the composite score tends to blur them together.
-      </p>
-
-      <h2>What the cohorts surfaced</h2>
-
-      <p>
-        The three cohorts were useful because each stressed a different part of the idea: command handlers tested whether the feature vector could separate size from shape, query handlers tested whether one cohort could contain multiple legitimate sub-shapes, and EF configurations tested whether the machinery could find a convention nobody had bothered to name.
-      </p>
-
-      <h3>Command handlers</h3>
-
-      <p>
-        The command-handler cohort had 34 members and seven features. Before normalisation, the largest handlers dominated the report; after normalisation, the strongest outliers were two handlers that wrapped work in SERIALIZABLE transactions with retry and rollback.
-      </p>
-
-      <p>
-        Those handlers were carrying legitimate business complexity, not making an obvious mistake. The report still did its job because it did not say "fail this"; it said "this is structurally unusual, please look at it." That is the right level of confidence for this kind of tool.
-      </p>
-
-      <p>
-        The same cohort also surfaced the inline DTO construction pattern. That one was not just unusual; it was a rule hiding in plain sight. Once found, it became a convention test that catches DTO construction through IL inspection and skips the one result-summary case where no mapper should exist.
-      </p>
-
-      <h3>Query handlers</h3>
-
-      <p>
-        The query-handler cohort had 20 members and three sub-shapes: by-id single-row, unpaginated list, and paginated list. Pinning one exemplar from each sub-shape mattered because there was no honest "average query handler" in that set. A single canonical exemplar would have produced a centroid that represented none of the real shapes well.
-      </p>
-
-      <p>
-        The only strong outlier was the query using a SQL JOIN, which was a useful advisory result because it was unusual enough to notice and still defensible as legitimate complexity. The score could not decide that for us; it just made the question hard to miss.
-      </p>
-
-      <p>
-        The same cohort also helped move list-query caching from an advisory concern into a hard convention, because list caches could not be reliably invalidated with the available cache abstraction.
-      </p>
-
-      <h3>EF configurations</h3>
-
-      <p>
-        The EF-configuration cohort had 26 members. It pinned a minimal config, a canonical mid-range config, and a richer aggregate config. On the first run, governance caught a configuration class nested inside another configuration file.
-      </p>
-
-      <p>
-        Every other configuration had its own file, but the rule had never been named, so the exception had been tolerated. Once surfaced, it was obvious enough to fix and enforce, which is the best kind of result for this system: it found a convention that already existed socially and made it explicit.
+        Those are the best results this system can produce. It finds a convention that already exists socially, makes it visible, and then gets out of the way once the rule is encoded directly.
       </p>
 
       <h2>Keep scores advisory</h2>
 
       <p>
-        A consistency score should not fail a merge, because distance has a known pathology: it punishes the first good example of a new pattern and rewards the tenth copy of a bad one. If unusual means blocked, the codebase cannot evolve.
+        A consistency score should not fail a merge. Distance has a simple pathology: it punishes the first good example of a new pattern and rewards the tenth copy of a bad one. If unusual means blocked, the codebase cannot evolve.
       </p>
 
       <p>
-        Use the score to rank attention rather than label files good or bad, because an outlier has at least three possible meanings: drift to correct, legitimate local complexity, or the first instance of a pattern that may later become an exemplar. The tool cannot decide which one you are looking at; a reviewer has to.
+        The report should rank attention, not label files good or bad. An outlier has at least three possible meanings: drift to correct, legitimate local complexity, or the first instance of a pattern that may later become intentional. The tool cannot tell which one you are looking at. A reviewer has to.
       </p>
 
       <p>
-        That is why the suite includes the meta-test mentioned earlier. It IL-inspects consistency tests for methods that read <code>CohortScore.Distance</code> and compare it with a literal floating-point value, unless the test is explicitly allow-listed as data-relative scorer coverage. The point is mundane but important: nobody should be able to turn an advisory report into <code>distance &lt; 5.0</code> without having that argument in review.
+        The suite protects that boundary with a meta-test. It scans consistency tests for literal distance thresholds such as <code>distance &lt; 5.0</code>. Data-relative scorer tests can be allow-listed with a reason, but nobody should be able to quietly turn an advisory report into a merge gate without having that argument in review.
+      </p>
+
+      <p>
+        That guardrail is mundane, but it matters. Without it, the report will eventually become a flaky policy engine wearing a review-tool costume.
       </p>
 
       <h2>Use prompts for explanation, not scoring</h2>
@@ -386,60 +260,38 @@
       </p>
 
       <p>
-        Prompt-based judges are not stable enough to trend, and they may share the same blind spots as the generator. A better use is explanation after deterministic scoring: this file is structurally unusual; here are the exemplars; describe the difference for review prep.
+        Prompt-based judges are not stable enough to trend, and they may share the same blind spots as the generator. A better use is explanation after deterministic scoring: here is the candidate file, here are the exemplars, here are the top feature differences, now turn that into review notes.
       </p>
 
       <p>
-        If I used a prompt here, I would feed it deterministic evidence: the candidate file, the exemplars, and the top feature differences. The prompt can turn that into review notes, but the score should come from code I can rerun.
+        The score should come from code I can rerun. The model can help explain the evidence, but it should not be the evidence.
       </p>
 
-      <h2>The loop I use now</h2>
+      <h2>The version I trust now</h2>
 
       <p>
-        The workflow I trust now is:
-      </p>
-
-      <ol>
-        <li>Pick one cohort large enough to measure and important enough to drift.</li>
-        <li>Pin three to five exemplars with written justification.</li>
-        <li>Extract a small feature vector that represents shape, not taste.</li>
-        <li>Normalise features before computing distance.</li>
-        <li>Read the report as advisory review guidance.</li>
-        <li>Promote repeatable deterministic findings into convention tests.</li>
-        <li>Update exemplars when a new pattern becomes intentional.</li>
-      </ol>
-
-      <p>
-        I am not trying to make every file look the same. I am trying to catch surprise while there is still time to decide whether it belongs.
-      </p>
-
-      <h2>What the longer paper is harsher about</h2>
-
-      <p>
-        The linked consistency paper is not just background reading. It is more empirical, and less charitable to the first version of the idea, because it compares the hunch with the implementation in the repo.
+        If I were rebuilding this from scratch, I would start smaller than I did.
       </p>
 
       <p>
-        The numbers matter because they show why the conclusion changed. Before normalisation, <code>IlByteSize</code> accounted for 98.5% of the command-handler distance contribution and was the top contributor for 34 out of 34 handlers. After normalisation, the top contributors spread across <code>EntityLoadCount</code>, <code>IlByteSize</code>, <code>HasTryCatch</code>, and <code>ConstructorDependencyCount</code>. That is the evidence behind the simpler claim above that normalisation changed the report from a size sort into a shape report.
+        I would pick one cohort that is large enough to measure and important enough to drift. I would pin three to five exemplars with written justification. I would extract a small feature vector that represents shape rather than taste. I would normalise the features, print the per-feature differences, and keep the result advisory. When a finding becomes a rule the team can state clearly, I would promote it into a deterministic convention test. When a new pattern becomes intentional, I would update the exemplars deliberately.
       </p>
 
       <p>
-        The paper is also harder on the secondary layers than this post was at first. Shingles correlated strongly with structural distance after normalisation, with Spearman 0.748 in the command-handler cohort, so they were mostly confirmation rather than independent evidence. Vocabulary similarity was less correlated, but a lot of that independence was vocabulary artefact: <code>Create*</code> handlers in particular domains looked different because of domain words, not because their design had necessarily drifted.
+        Structural fingerprints and per-feature divergence are the load-bearing parts. The composite score is useful as a sort order, but only with explanations attached. Shingles are worth keeping if they are cheap. Vocabulary similarity is exploratory until it finds a repeatable pattern worth promoting.
       </p>
 
       <p>
-        The useful vocabulary result was accidental but real: it helped surface inline DTO construction, which then became a convention test. That does not make vocabulary similarity a scoring authority; it makes it a way to find hunches that still need to be checked by review.
-      </p>
-
-      <p>
-        The bigger correction is the per-feature report. In the repo paper, that report is not an add-on to the distance score. It is probably the more useful review surface, because it answers the human question directly: which files differ, and on which feature? If I were rebuilding this from scratch, I would start with structural fingerprints and per-feature divergence, then add shingles only if they were cheap. I would leave vocabulary similarity as exploratory until it found repeatable patterns worth promoting.
+        The goal is not to make every file look the same. The goal is to catch surprise while there is still time to decide whether it belongs.
       </p>
 
       <p class="source-note">
-        Adapted from <a href="https://github.com/z3d/z3d-consistency/blob/main/docs/papers/consistency-in-agent-generated-code.md">z3d&apos;s consistency paper</a> and the extracted <a href="https://github.com/z3d/z3d-consistency"><code>Z3D.Consistency</code></a> library.
+        Adapted from <a href="https://github.com/z3d/z3d-consistency/blob/main/docs/papers/consistency-in-agent-generated-code.md">z3d&#x27;s consistency paper</a> and the extracted <a href="https://github.com/z3d/z3d-consistency"><code>Z3D.Consistency</code></a> library.
       </p>
 
-      <p class="source-note"><em>Disclosure: I wrote this with help from Claude Code and Codex. The consistency concern was mine; the statistical framing and some implementation choices were guided by the models, then checked against the source code and the longer paper.</em></p>
+      <p class="source-note">
+        <em>Disclosure: I wrote this with help from Claude Code and Codex. The consistency concern and codebase examples are mine; some statistical framing and implementation choices were model-guided, then checked against the source code and the longer paper.</em>
+      </p>
     </article>
   </main>
 
