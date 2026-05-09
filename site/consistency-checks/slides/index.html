@@ -1,0 +1,953 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Consistency checks for agent-written code</title>
+  <meta name="description" content="A plain-English slide deck explaining exemplar-based consistency checks for software development teams.">
+  <meta name="author" content="z3d">
+  <style>
+    :root {
+      --ink: #182124;
+      --muted: #59676b;
+      --paper: #f7f4ec;
+      --surface: #fffdf6;
+      --line: #d8d0bf;
+      --teal: #0f766e;
+      --teal-soft: #d8efea;
+      --coral: #d95f43;
+      --coral-soft: #f6d9cf;
+      --gold: #c48a17;
+      --gold-soft: #f3e5bf;
+      --blue: #365b9d;
+      --blue-soft: #dae3f6;
+      --green: #4b7f52;
+      --shadow: 0 24px 80px rgba(24, 33, 36, 0.16);
+      --radius: 8px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        linear-gradient(145deg, rgba(15, 118, 110, 0.10), transparent 34%),
+        linear-gradient(315deg, rgba(217, 95, 67, 0.10), transparent 38%),
+        var(--paper);
+      overflow: hidden;
+    }
+
+    .deck {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      padding: clamp(16px, 2.2vw, 28px);
+      gap: 14px;
+    }
+
+    .topbar,
+    .controls {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--ink);
+      text-decoration: none;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      color: var(--surface);
+      background: var(--ink);
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .topbar a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .topbar a:hover,
+    .topbar a:focus-visible {
+      color: var(--teal);
+      outline: none;
+    }
+
+    .progress {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 220px;
+    }
+
+    .progress-track {
+      width: 170px;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(24, 33, 36, 0.12);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--teal), var(--coral), var(--gold));
+      transition: width 160ms ease;
+    }
+
+    .stage {
+      position: relative;
+      width: min(1180px, 100%);
+      height: min(720px, calc(100vh - 148px));
+      min-height: 540px;
+      margin: 0 auto;
+      border: 1px solid rgba(24, 33, 36, 0.10);
+      border-radius: 16px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      align-content: center;
+      gap: 24px;
+      padding: clamp(34px, 5vw, 72px);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateX(24px);
+      transition: opacity 180ms ease, transform 180ms ease, visibility 180ms ease;
+    }
+
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(0);
+    }
+
+    .kicker {
+      width: fit-content;
+      padding: 7px 11px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--teal);
+      background: var(--teal-soft);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    h1,
+    h2 {
+      margin: 0;
+      max-width: 940px;
+      color: var(--ink);
+      font-weight: 850;
+      letter-spacing: 0;
+      line-height: 0.98;
+    }
+
+    h1 {
+      font-size: clamp(46px, 7vw, 82px);
+    }
+
+    h2 {
+      font-size: clamp(34px, 5vw, 62px);
+    }
+
+    p {
+      margin: 0;
+      max-width: 860px;
+      color: var(--muted);
+      font-size: clamp(20px, 2.2vw, 28px);
+      line-height: 1.34;
+    }
+
+    .lede {
+      color: var(--ink);
+      font-size: clamp(24px, 3vw, 36px);
+      line-height: 1.22;
+    }
+
+    .small {
+      font-size: clamp(16px, 1.5vw, 20px);
+      line-height: 1.45;
+    }
+
+    .cols {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+      align-items: stretch;
+    }
+
+    .cols.three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 22px;
+      background: #fffaf0;
+    }
+
+    .panel.teal {
+      background: var(--teal-soft);
+      border-color: rgba(15, 118, 110, 0.24);
+    }
+
+    .panel.coral {
+      background: var(--coral-soft);
+      border-color: rgba(217, 95, 67, 0.24);
+    }
+
+    .panel.blue {
+      background: var(--blue-soft);
+      border-color: rgba(54, 91, 157, 0.24);
+    }
+
+    .panel.gold {
+      background: var(--gold-soft);
+      border-color: rgba(196, 138, 23, 0.24);
+    }
+
+    .panel h3 {
+      margin: 0 0 10px;
+      color: var(--ink);
+      font-size: clamp(20px, 2vw, 26px);
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    .panel p,
+    .panel li {
+      color: #243033;
+      font-size: clamp(16px, 1.55vw, 20px);
+      line-height: 1.38;
+    }
+
+    ul,
+    ol {
+      margin: 0;
+      padding-left: 22px;
+    }
+
+    li + li {
+      margin-top: 8px;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .step {
+      position: relative;
+      min-height: 126px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fffaf0;
+    }
+
+    .step strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--ink);
+      font-size: 18px;
+      line-height: 1.1;
+    }
+
+    .step span {
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.35;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-size: clamp(15px, 1.5vw, 19px);
+      background: #fffaf0;
+    }
+
+    .table th,
+    .table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .table th {
+      color: var(--ink);
+      background: #eee6d3;
+      font-weight: 800;
+    }
+
+    .table tr:last-child td {
+      border-bottom: 0;
+    }
+
+    code {
+      padding: 2px 6px;
+      border-radius: 5px;
+      color: #142326;
+      background: rgba(24, 33, 36, 0.08);
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 0.86em;
+    }
+
+    .metric-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .metric {
+      padding: 20px;
+      border-radius: var(--radius);
+      color: var(--ink);
+      background: var(--blue-soft);
+      border: 1px solid rgba(54, 91, 157, 0.25);
+    }
+
+    .metric:nth-child(2) {
+      background: var(--teal-soft);
+      border-color: rgba(15, 118, 110, 0.25);
+    }
+
+    .metric:nth-child(3) {
+      background: var(--gold-soft);
+      border-color: rgba(196, 138, 23, 0.25);
+    }
+
+    .metric b {
+      display: block;
+      margin-bottom: 6px;
+      font-size: clamp(32px, 4vw, 52px);
+      line-height: 1;
+    }
+
+    .metric span {
+      color: #243033;
+      font-size: clamp(15px, 1.45vw, 19px);
+      line-height: 1.3;
+    }
+
+    .compare {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .versus {
+      display: grid;
+      place-items: center;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      color: var(--surface);
+      background: var(--ink);
+      font-weight: 800;
+    }
+
+    .quote {
+      padding-left: 20px;
+      border-left: 5px solid var(--coral);
+      color: var(--ink);
+      font-size: clamp(22px, 2.6vw, 34px);
+      line-height: 1.24;
+    }
+
+    .controls button,
+    .controls a {
+      min-height: 40px;
+      padding: 9px 14px;
+      border: 1px solid rgba(24, 33, 36, 0.22);
+      border-radius: var(--radius);
+      color: var(--ink);
+      background: rgba(255, 253, 246, 0.76);
+      text-decoration: none;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .controls button:hover,
+    .controls button:focus-visible,
+    .controls a:hover,
+    .controls a:focus-visible {
+      border-color: var(--teal);
+      outline: 2px solid rgba(15, 118, 110, 0.18);
+      outline-offset: 2px;
+    }
+
+    .control-group {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .footer-title {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 840px) {
+      body {
+        overflow: auto;
+      }
+
+      .deck {
+        min-height: auto;
+      }
+
+      .topbar,
+      .controls {
+        align-items: flex-start;
+      }
+
+      .topbar {
+        flex-direction: column;
+      }
+
+      .progress {
+        width: 100%;
+      }
+
+      .progress-track {
+        flex: 1;
+        width: auto;
+      }
+
+      .stage {
+        height: auto;
+        min-height: 0;
+        overflow: visible;
+      }
+
+      .slide,
+      .slide.active {
+        position: relative;
+        display: none;
+        min-height: calc(100vh - 170px);
+        transform: none;
+      }
+
+      .slide.active {
+        display: grid;
+      }
+
+      .cols,
+      .cols.three,
+      .flow,
+      .metric-strip,
+      .compare {
+        grid-template-columns: 1fr;
+      }
+
+      .versus {
+        width: auto;
+        height: auto;
+        padding: 8px 12px;
+        border-radius: var(--radius);
+      }
+
+      .controls {
+        flex-wrap: wrap;
+      }
+
+      .hint {
+        display: none;
+      }
+    }
+
+    @media print {
+      body {
+        overflow: visible;
+        background: #fff;
+      }
+
+      .deck {
+        padding: 0;
+      }
+
+      .topbar,
+      .controls {
+        display: none;
+      }
+
+      .stage {
+        width: auto;
+        height: auto;
+        box-shadow: none;
+        border: 0;
+      }
+
+      .slide {
+        position: relative;
+        page-break-after: always;
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+        min-height: 100vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="deck">
+    <header class="topbar">
+      <a class="brand" href="../../" aria-label="Developer notes home">
+        <span class="brand-mark" aria-hidden="true">z</span>
+        <span>Developer notes</span>
+      </a>
+      <div class="progress" aria-label="Slide progress">
+        <span id="slide-count">1 / 15</span>
+        <div class="progress-track" aria-hidden="true">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="stage" aria-live="polite">
+      <section class="slide active" data-title="Title">
+        <span class="kicker">Consistency checks</span>
+        <h1>Looking at what code actually does</h1>
+        <p class="lede">
+          A practical way to spot drift in agent-written code before it becomes the new normal.
+        </p>
+      </section>
+
+      <section class="slide" data-title="The Problem">
+        <span class="kicker">The problem</span>
+        <h2>Generated code can be locally fine and collectively tiring</h2>
+        <p>
+          Each file can compile, pass tests, and answer the ticket. The pain appears later, when neighbouring files no longer agree on the shape of the work.
+        </p>
+        <div class="cols three">
+          <div class="panel coral">
+            <h3>One handler validates first</h3>
+            <p>Another loads first. Both might be defensible. Together, they make the next change slower.</p>
+          </div>
+          <div class="panel teal">
+            <h3>One query caches a list</h3>
+            <p>The sibling query doesn't. Nobody wrote the rule down, so the difference slips through.</p>
+          </div>
+          <div class="panel blue">
+            <h3>One config hides a class</h3>
+            <p>Every other EF configuration has one file per class. The exception sits there quietly.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="The Plain Claim">
+        <span class="kicker">Plain claim</span>
+        <h2>Think of it as a nudge in review</h2>
+        <p>
+          Pick a family of similar files, pin a few examples of the intended shape, inspect the rest, and tell reviewers which files look unlike their peers.
+        </p>
+        <div class="quote">
+          A score gets you in the neighbourhood. The useful part is the explanation: seven dependencies, no entity loads, and the only try/catch in the cohort.
+        </div>
+      </section>
+
+      <section class="slide" data-title="Cohorts">
+        <span class="kicker">Cohorts first</span>
+        <h2>Compare like with like</h2>
+        <p>
+          The measurement only makes sense inside a cohort: command handlers with command handlers, query handlers with query handlers, EF configurations with EF configurations.
+        </p>
+        <div class="metric-strip">
+          <div class="metric">
+            <b>34</b>
+            <span>command handlers in the case-study cohort</span>
+          </div>
+          <div class="metric">
+            <b>20</b>
+            <span>query handlers, split across by-id, list, and paginated-list shapes</span>
+          </div>
+          <div class="metric">
+            <b>26</b>
+            <span>EF configurations, measured by fluent API shape</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Exemplars">
+        <span class="kicker">Reference point</span>
+        <h2>Pin exemplars before measuring the rest</h2>
+        <div class="compare">
+          <div class="panel coral">
+            <h3>Current average</h3>
+            <p>The average can already contain drift. Once a bad pattern is in the reference, the next bad pattern starts to look ordinary.</p>
+          </div>
+          <div class="versus">or</div>
+          <div class="panel teal">
+            <h3>Pinned exemplars</h3>
+            <p>A small set of files the team would defend as the intended shape, with written justification for each one.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Structural Fingerprint">
+        <span class="kicker">Structural fingerprint</span>
+        <h2>A fingerprint is a row of boring facts</h2>
+        <p>
+          The fingerprint is an inventory. It extracts small, concrete facts that describe the file's shape.
+        </p>
+        <table class="table" aria-label="Example structural fingerprint">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>What it roughly tells us</th>
+              <th>Example value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>IlByteSize</code></td>
+              <td>Compiled complexity proxy, separate from source line count</td>
+              <td>1,842</td>
+            </tr>
+            <tr>
+              <td><code>ConstructorDependencyCount</code></td>
+              <td>How much the handler pulls in to do its work</td>
+              <td>3</td>
+            </tr>
+            <tr>
+              <td><code>HasTryCatch</code></td>
+              <td>Whether it has rare explicit error-handling shape</td>
+              <td>false</td>
+            </tr>
+            <tr>
+              <td><code>EntityLoadCount</code></td>
+              <td>How much existing state it reads before acting</td>
+              <td>2</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="slide" data-title="How It Runs">
+        <span class="kicker">How it runs</span>
+        <h2>The pipeline is deliberately mechanical</h2>
+        <div class="flow" aria-label="Consistency check pipeline">
+          <div class="step">
+            <strong>Find peers</strong>
+            <span>Discover the files in one cohort.</span>
+          </div>
+          <div class="step">
+            <strong>Pin examples</strong>
+            <span>Use the written exemplar list as the reference.</span>
+          </div>
+          <div class="step">
+            <strong>Inspect code</strong>
+            <span>Reflect over compiled types and source metadata.</span>
+          </div>
+          <div class="step">
+            <strong>Normalise</strong>
+            <span>Put counts and booleans on comparable scales.</span>
+          </div>
+          <div class="step">
+            <strong>Explain</strong>
+            <span>Show the features that drove the difference.</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Normalisation">
+        <span class="kicker">Important lesson</span>
+        <h2>Normalise first or the biggest file wins</h2>
+        <p>
+          The first command-handler run put byte-size next to booleans. Unsurprisingly, <code>IlByteSize</code> explained almost everything.
+        </p>
+        <div class="cols">
+          <div class="panel coral">
+            <h3>Before</h3>
+            <p><code>IlByteSize</code> contributed 98.5% of the distance score. The report had quietly become a large-file sorter.</p>
+          </div>
+          <div class="panel teal">
+            <h3>After</h3>
+            <p>Feature contributions spread across entity-load count, byte size, try/catch, and dependency count. The result became a shape report.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="The Other Layers">
+        <span class="kicker">Supporting layers</span>
+        <h2>Shingles and source tokens are supporting signals</h2>
+        <p>
+          The structural fingerprint did most of the useful work. The other layers helped at the margins, and their limits matter.
+        </p>
+        <div class="cols">
+          <div class="panel blue">
+            <h3>IL shingles</h3>
+            <p>Compare short opcode sequences. They are a cheap second opinion for compiled skeleton shape, and often move with the structural score.</p>
+          </div>
+          <div class="panel gold">
+            <h3>Source-token similarity</h3>
+            <p>Compare local vocabulary from names, strings, type references, and metadata. Useful for hunches. Weak evidence for intent.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="What The Tests Protect">
+        <span class="kicker">Tests as governance</span>
+        <h2>The tests protect the measuring instrument</h2>
+        <p>
+          These tests keep the report honest and stop it drifting into policy by accident. Unusual files still go to a person.
+        </p>
+        <div class="cols">
+          <div class="panel teal">
+            <h3>Exemplar governance</h3>
+            <ul>
+              <li>Every exemplar resolves to a real file.</li>
+              <li>Every exemplar has a written justification.</li>
+              <li>The centroid stays anchored to exemplars.</li>
+            </ul>
+          </div>
+          <div class="panel coral">
+            <h3>Advisory boundary</h3>
+            <ul>
+              <li>Hard "distance &lt; 5.0" merge gates stay out.</li>
+              <li>Known recurring findings graduate to convention tests.</li>
+              <li>Distance remains a prompt for human review.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="What Became Rules">
+        <span class="kicker">From signal to rule</span>
+        <h2>The best findings stop being scores</h2>
+        <p>
+          When the same signal fires for a clear reason, the right move is to make a deterministic convention test and retire the guesswork.
+        </p>
+        <div class="cols three">
+          <div class="panel teal">
+            <h3>Inline DTO construction</h3>
+            <p>Found through review of source-token outliers, then enforced as <code>CommandHandlers_MustNotConstructMappedDtosInline</code>.</p>
+          </div>
+          <div class="panel blue">
+            <h3>List-query caching</h3>
+            <p>Started as an advisory concern. Became a convention test once the invalidation risk was clear.</p>
+          </div>
+          <div class="panel gold">
+            <h3>One EF config per file</h3>
+            <p>A nested configuration was surfaced by exemplar discovery and split into its own file.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="False Positives">
+        <span class="kicker">Keep it modest</span>
+        <h2>An outlier deserves a look</h2>
+        <p>
+          The report can flag legitimate complexity. The two SERIALIZABLE transaction handlers looked unusual because they were unusual. That helped us understand them, with no rewrite implied.
+        </p>
+        <div class="panel coral">
+          <h3>The failure mode to avoid</h3>
+          <p>A distance gate punishes the first good example of a new pattern and rewards the tenth copy of a bad one. Keep this in review output and away from merge blocking.</p>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Where It Fits">
+        <span class="kicker">Where it fits</span>
+        <h2>Put it between review instinct and hard convention tests</h2>
+        <table class="table" aria-label="Where consistency checks fit">
+          <thead>
+            <tr>
+              <th>Problem</th>
+              <th>Best tool</th>
+              <th>Why</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Rule already known</td>
+              <td>Convention test</td>
+              <td>Deterministic yes or no</td>
+            </tr>
+            <tr>
+              <td>File feels unlike its peers</td>
+              <td>Consistency report</td>
+              <td>Ranks attention and explains differences</td>
+            </tr>
+            <tr>
+              <td>Business case is genuinely odd</td>
+              <td>Human review note</td>
+              <td>The code may be right because the domain is odd</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="slide" data-title="What To Use">
+        <span class="kicker">Practical verdict</span>
+        <h2>Keep the boring parts. Question the fancy parts.</h2>
+        <div class="cols">
+          <div class="panel teal">
+            <h3>Use this</h3>
+            <ul>
+              <li>Cohort-specific discovery.</li>
+              <li>Pinned exemplars with reasons.</li>
+              <li>Simple structural fingerprints.</li>
+              <li>Per-feature divergence reports.</li>
+              <li>Advisory output.</li>
+            </ul>
+          </div>
+          <div class="panel coral">
+            <h3>Treat carefully</h3>
+            <ul>
+              <li>Composite scores without explanations.</li>
+              <li>Small exemplar sets pretending to be robust models.</li>
+              <li>Vocabulary similarity dressed up as intent.</li>
+              <li>Build failures based on distance alone.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Closing">
+        <span class="kicker">Takeaway</span>
+        <h2>The idea is useful because it is humble</h2>
+        <p class="lede">
+          Look at the code. Count the small facts. Compare it with chosen examples. Show reviewers where the shape has changed.
+        </p>
+        <p>
+          The score gets attention. The conversation does the work.
+        </p>
+      </section>
+    </main>
+
+    <footer class="controls">
+      <div class="control-group">
+        <button type="button" id="prev">Previous</button>
+        <button type="button" id="next">Next</button>
+      </div>
+      <div class="footer-title" id="footer-title">Title</div>
+      <div class="control-group">
+        <a href="../">Read the post</a>
+        <span class="hint">Arrow keys navigate</span>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    const slides = Array.from(document.querySelectorAll(".slide"));
+    const count = document.getElementById("slide-count");
+    const fill = document.getElementById("progress-fill");
+    const title = document.getElementById("footer-title");
+    const prev = document.getElementById("prev");
+    const next = document.getElementById("next");
+
+    let index = 0;
+
+    function clampSlide(value) {
+      return Math.max(0, Math.min(slides.length - 1, value));
+    }
+
+    function readHash() {
+      const match = window.location.hash.match(/^#(\d+)$/);
+      if (!match) return 0;
+      return clampSlide(Number(match[1]) - 1);
+    }
+
+    function render(pushHash = true) {
+      slides.forEach((slide, i) => {
+        slide.classList.toggle("active", i === index);
+        slide.setAttribute("aria-hidden", i === index ? "false" : "true");
+      });
+      count.textContent = `${index + 1} / ${slides.length}`;
+      fill.style.width = `${((index + 1) / slides.length) * 100}%`;
+      title.textContent = slides[index].dataset.title || "";
+      prev.disabled = index === 0;
+      next.disabled = index === slides.length - 1;
+      document.title = `${slides[index].dataset.title || "Slide"} - Consistency checks`;
+      if (pushHash) {
+        history.replaceState(null, "", `#${index + 1}`);
+      }
+    }
+
+    function go(delta) {
+      const nextIndex = clampSlide(index + delta);
+      if (nextIndex === index) return;
+      index = nextIndex;
+      render();
+    }
+
+    prev.addEventListener("click", () => go(-1));
+    next.addEventListener("click", () => go(1));
+
+    window.addEventListener("keydown", event => {
+      if (event.key === "ArrowRight" || event.key === "PageDown" || event.key === " ") {
+        event.preventDefault();
+        go(1);
+      }
+      if (event.key === "ArrowLeft" || event.key === "PageUp") {
+        event.preventDefault();
+        go(-1);
+      }
+      if (event.key === "Home") {
+        event.preventDefault();
+        index = 0;
+        render();
+      }
+      if (event.key === "End") {
+        event.preventDefault();
+        index = slides.length - 1;
+        render();
+      }
+    });
+
+    window.addEventListener("hashchange", () => {
+      index = readHash();
+      render(false);
+    });
+
+    index = readHash();
+    render(false);
+  </script>
+</body>
+</html>
