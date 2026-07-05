@@ -18,7 +18,7 @@ Those measurements cannot tell good code from bad code. They are just enough to 
 
 Correctness, style, convention compliance, and consistency all get bundled together in conversation, but they need different tools.
 
-If every command handler must have a validator, that belongs in a deterministic convention test. If query handlers must not use EF Core, or command handlers must not use Dapper, encode those rules directly and let CI catch them. Formatting and narrow style choices can stay with formatters and analysers. Those tools are good at decisions the team has already made clearly enough to write down.
+If every command handler must have a validator, that belongs in a deterministic convention test. If query handlers must not use EF Core, or command handlers must not use Dapper, encode those rules directly and let CI catch them. Formatting and narrow style choices can stay with formatters and analysers. Those tools are good at decisions the team has already made clearly enough to write down. Architecture-test tools such as [ArchUnit](https://www.archunit.org/userguide/html/000_Index.html) and [NetArchTest](https://github.com/BenMorris/NetArchTest) exist for exactly this: rules the team can already state.
 
 The gap is the file that obeys the written rules and still feels unfamiliar. In this work, consistency means idiom: the proportions of the file, the amount of orchestration, how dependencies are arranged, whether cache behaviour appears, how many entities get loaded, whether there is a rare combination of features in a place where the surrounding files stay simple. A reviewer might notice that kind of thing by instinct, but instinct gets unreliable when there are twenty generated files in a row and the code all looks plausible at a glance.
 
@@ -33,6 +33,8 @@ The reference implementation uses three cohorts: 34 command handlers, 20 query h
 The cohort boundary carries a lot of meaning. A command handler changes state, so it often loads entities, calls domain methods, saves changes, invalidates caches, and returns a DTO. A query handler reads data and should usually be thinner, lighter on dependencies, and shaped around the result it returns. EF configurations have their structure in fluent mapping calls. Treating all of those as generic "classes" would blur the thing I am trying to measure.
 
 Within each cohort, I pin three to five exemplars. These are the files I would point a new engineer, or a new agent session, at and say: start here; this is the direction the codebase wants you to move in.
+
+Exemplars usually appear in LLM workflows as generation guidance: paste three good files into the prompt and ask for a fourth in the same style. These exemplars point the other way. They are the measuring instrument, not the instruction, and copying one of them too closely would itself be a kind of drift.
 
 I prefer pinned exemplars to the current average of the cohort. The current average can already contain drift, and once drift becomes part of the reference point, new drift starts to look normal. Exemplars also force a little governance. They need written justification, because they are no longer just examples in the repo; they are part of the measuring instrument.
 
